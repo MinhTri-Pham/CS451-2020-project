@@ -4,6 +4,9 @@
 target/
 bin/da_proc.jar
 
+## Intellij IDEA files
+.idea
+
 ### Java ###
 # Compiled class file
 *.class
