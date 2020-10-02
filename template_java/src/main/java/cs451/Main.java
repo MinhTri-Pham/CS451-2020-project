@@ -1,5 +1,7 @@
 package cs451;
 
+import cs451.links.PerfectLink;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -52,17 +54,48 @@ public class Main {
 
         Coordinator coordinator = new Coordinator(parser.myId(), parser.barrierIp(), parser.barrierPort(), parser.signalIp(), parser.signalPort());
 
-	System.out.println("Waiting for all processes for finish initialization");
+	    System.out.println("Waiting for all processes for finish initialization");
         coordinator.waitOnBarrier();
 
-	System.out.println("Broadcasting messages...");
+//	    System.out.println("Broadcasting messages...");
 
-	System.out.println("Signaling end of broadcasting messages");
+        System.out.println("Test perfect link");
+        try {
+            testPerfectLink(parser);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+	    System.out.println("Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();
 
-	while (true) {
-	    // Sleep for 1 hour
-	    Thread.sleep(60 * 60 * 1000);
-	}
+	    while (true) {
+	        // Sleep for 1 hour
+	        Thread.sleep(60 * 60 * 1000);
+	    }
+    }
+
+    private static void testPerfectLink(Parser parser) throws IOException {
+        if (parser.myId() == 1) {
+            PerfectLink pf1 = new PerfectLink();
+            Host dest = parser.hosts().get(1);
+            for (int i = 0; i < 5; i++) {
+                pf1.send(Integer.toString(i), dest.getIp(), dest.getId());
+                String received = pf1.receive();
+                if (received != null) System.out.println(received);
+            }
+        }
+
+        else {
+            PerfectLink pf2 = new PerfectLink();
+            Host dest = parser.hosts().get(0);
+            for (int i = 5; i < 10; i++) {
+                pf2.send(Integer.toString(i), dest.getIp(), dest.getId());
+                String received = pf2.receive();
+                if (received != null) System.out.println(received);
+            }
+        }
+
     }
 }

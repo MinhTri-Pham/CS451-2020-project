@@ -24,7 +24,10 @@ public class PerfectLink {
             delivered.add(received);
             return received;
         }
-        return null;
+        else {
+            System.out.println("Already received message");
+            return null;
+        }
     }
 
 }
