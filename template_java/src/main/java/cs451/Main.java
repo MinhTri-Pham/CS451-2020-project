@@ -1,5 +1,6 @@
 package cs451;
 
+import cs451.links.FairLossLink;
 import cs451.links.PerfectLink;
 
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class Main {
 //	    System.out.println("Broadcasting messages...");
 
         try {
-            testPerfectLinkTwoHosts(parser);
+            testFairLossLinkTwoHosts(parser);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -75,12 +76,12 @@ public class Main {
 	    }
     }
 
-    private static void testPerfectLinkTwoHosts(Parser parser) throws IOException {
+    private static void testFairLossLinkTwoHosts(Parser parser) throws IOException {
         System.out.println("Test perfect link");
         Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
-            PerfectLink pf1 = new PerfectLink(h1.getPort(), h1.getIp());
+            FairLossLink pf1 = new FairLossLink(h1.getPort(), h1.getIp());
 //            for (int i = 0; i < 5; i++) {
 //                pf1.send(Integer.toString(i),h2.getPort(), h2.getIp());
 //                String received = pf1.receive();
@@ -92,7 +93,7 @@ public class Main {
         }
 
         else {
-            PerfectLink pf2 = new PerfectLink(h2.getPort(), h2.getIp());
+            FairLossLink pf2 = new FairLossLink(h2.getPort(), h2.getIp());
 //            for (int i = 5; i < 10; i++) {
 //                pf2.send(Integer.toString(i), h1.getPort(), h1.getIp());
 //                String received = pf2.receive();
