@@ -81,21 +81,23 @@ public class Main {
         Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
             PerfectLink pf1 = new PerfectLink(h1.getPort(), h1.getIp());
-            for (int i = 0; i < 5; i++) {
-                pf1.send(Integer.toString(i),h2.getPort(), h2.getIp());
-                String received = pf1.receive();
-                if (received != null) System.out.println(received);
-            }
+//            for (int i = 0; i < 5; i++) {
+//                pf1.send(Integer.toString(i),h2.getPort(), h2.getIp());
+//                String received = pf1.receive();
+//                if (received != null) System.out.println(received);
+//            }
+            pf1.send("Hi process 2",h2.getPort(), h2.getIp());
         }
 
         else {
             PerfectLink pf2 = new PerfectLink(h2.getPort(), h2.getIp());
-            for (int i = 5; i < 10; i++) {
-                pf2.send(Integer.toString(i), h1.getPort(), h1.getIp());
-                String received = pf2.receive();
-                System.out.println(received);
-                if (received != null) System.out.println(received);
-            }
+//            for (int i = 5; i < 10; i++) {
+//                pf2.send(Integer.toString(i), h1.getPort(), h1.getIp());
+//                String received = pf2.receive();
+//                System.out.println(received);
+//                if (received != null) System.out.println(received);
+//            }
+            pf2.send("Hi process 1",h1.getPort(), h1.getIp());
         }
 
     }
