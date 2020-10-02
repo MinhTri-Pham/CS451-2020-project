@@ -81,7 +81,7 @@ public class Main {
             PerfectLink pf1 = new PerfectLink();
             Host dest = parser.hosts().get(1);
             for (int i = 0; i < 5; i++) {
-                pf1.send(Integer.toString(i), dest.getIp(), dest.getId());
+                pf1.send(Integer.toString(i), dest.getIp(), dest.getPort());
                 String received = pf1.receive();
                 if (received != null) System.out.println(received);
             }
@@ -91,7 +91,7 @@ public class Main {
             PerfectLink pf2 = new PerfectLink();
             Host dest = parser.hosts().get(0);
             for (int i = 5; i < 10; i++) {
-                pf2.send(Integer.toString(i), dest.getIp(), dest.getId());
+                pf2.send(Integer.toString(i), dest.getIp(), dest.getPort());
                 String received = pf2.receive();
                 if (received != null) System.out.println(received);
             }
