@@ -9,13 +9,13 @@ public class PerfectLink {
     private StubbornLink sl;
     private List<String> delivered;
 
-    public PerfectLink() {
-        sl = new StubbornLink();
+    public PerfectLink(int sourcePort, String sourceIp) {
+        sl = new StubbornLink(sourcePort, sourceIp);
         delivered = new ArrayList<>();
     }
 
-    public void send(String message, String destIp, int destPort) throws IOException {
-        sl.send(message,destIp,destPort);
+    public void send(String message, int destPort, String destIp) throws IOException {
+        sl.send(message,destPort,destIp);
     }
 
     public String receive() throws IOException {

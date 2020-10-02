@@ -5,14 +5,13 @@ import java.io.IOException;
 public class StubbornLink {
     private FairLossLink fll;
 
-    public StubbornLink() {
-        this.fll = new FairLossLink();
+    public StubbornLink(int sourcePort, String sourceIp) {
+        this.fll = new FairLossLink(sourcePort, sourceIp);
     }
 
-    public void send(String message, String destIp, int destPort) throws IOException {
-//        while(true)
-//            fll.send(message, destIp, destPort);
-        fll.send(message, destIp, destPort);
+    public void send(String message, int destPort, String destIp) throws IOException {
+        while(true)
+            fll.send(message, destPort, destIp);
     }
 
     public String receive() throws IOException {

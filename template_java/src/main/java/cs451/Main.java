@@ -60,7 +60,7 @@ public class Main {
 //	    System.out.println("Broadcasting messages...");
 
         try {
-            testPerfectLink(parser);
+            testPerfectLinkTwoHosts(parser);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,33 +69,29 @@ public class Main {
 	    System.out.println("Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();
 
-//	    while (true) {
-//	        // Sleep for 1 hour
-//	        Thread.sleep(60 * 60 * 1000);
-//	    }
+	    while (true) {
+	        // Sleep for 1 hour
+	        Thread.sleep(60 * 60 * 1000);
+	    }
     }
 
-    private static void testPerfectLink(Parser parser) throws IOException {
+    private static void testPerfectLinkTwoHosts(Parser parser) throws IOException {
         System.out.println("Test perfect link");
-        System.out.println("PID is " + parser.myId());
+        Host h1 = parser.hosts().get(0);
+        Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
-            PerfectLink pf1 = new PerfectLink();
-            Host dest = parser.hosts().get(1);
-            System.out.println("Sending from 1");
+            PerfectLink pf1 = new PerfectLink(h1.getPort(), h1.getIp());
             for (int i = 0; i < 5; i++) {
-                pf1.send(Integer.toString(i), dest.getIp(), dest.getPort());
+                pf1.send(Integer.toString(i),h2.getPort(), h2.getIp());
                 String received = pf1.receive();
-                System.out.println(received);
                 if (received != null) System.out.println(received);
             }
         }
 
         else {
-            PerfectLink pf2 = new PerfectLink();
-            Host dest = parser.hosts().get(0);
-            System.out.println("Sending from 2");
+            PerfectLink pf2 = new PerfectLink(h2.getPort(), h2.getIp());
             for (int i = 5; i < 10; i++) {
-                pf2.send(Integer.toString(i), dest.getIp(), dest.getPort());
+                pf2.send(Integer.toString(i), h1.getPort(), h1.getIp());
                 String received = pf2.receive();
                 System.out.println(received);
                 if (received != null) System.out.println(received);

@@ -11,14 +11,14 @@ public class BestEffortBroadcast {
     private PerfectLink pl;
     private List<Host> hosts;
 
-    public BestEffortBroadcast(List<Host> hosts) {
+    public BestEffortBroadcast(int sourcePort, String sourceIp,List<Host> hosts) {
         this.hosts = hosts;
-        pl = new PerfectLink();
+        pl = new PerfectLink(sourcePort, sourceIp);
     }
 
     public void broadcast(String message) throws IOException {
         for (Host host : hosts) {
-            pl.send(message, host.getIp(), host.getId());
+            pl.send(message, host.getPort(), host.getIp());
         }
     }
 

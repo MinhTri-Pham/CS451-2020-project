@@ -9,15 +9,15 @@ public class FairLossLink {
 
     private DatagramSocket socket;
 
-    public FairLossLink() {
+    public FairLossLink(int sourcePort, String sourceIp) {
         try {
-            socket = new DatagramSocket();
+            socket = new DatagramSocket(sourcePort, InetAddress.getByName(sourceIp));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void send(String message, String destIp, int destPort) throws IOException {
+    public void send(String message, int destPort, String destIp) throws IOException {
         InetAddress ip = InetAddress.getByName(destIp);
         byte[] buf = message.getBytes();
         DatagramPacket dpSend = new DatagramPacket(buf, buf.length, ip, destPort);
