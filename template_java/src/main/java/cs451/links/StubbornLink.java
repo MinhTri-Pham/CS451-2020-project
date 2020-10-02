@@ -10,8 +10,9 @@ public class StubbornLink {
     }
 
     public void send(String message, String destIp, int destPort) throws IOException {
-        while(true)
-            fll.send(message, destIp, destPort);
+//        while(true)
+//            fll.send(message, destIp, destPort);
+        fll.send(message, destIp, destPort);
     }
 
     public String receive() throws IOException {
