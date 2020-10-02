@@ -80,9 +80,11 @@ public class Main {
         if (parser.myId() == 1) {
             PerfectLink pf1 = new PerfectLink();
             Host dest = parser.hosts().get(1);
+            System.out.println("Sending from 1");
             for (int i = 0; i < 5; i++) {
                 pf1.send(Integer.toString(i), dest.getIp(), dest.getPort());
                 String received = pf1.receive();
+                System.out.println(received);
                 if (received != null) System.out.println(received);
             }
         }
@@ -90,9 +92,11 @@ public class Main {
         else {
             PerfectLink pf2 = new PerfectLink();
             Host dest = parser.hosts().get(0);
+            System.out.println("Sending from 2");
             for (int i = 5; i < 10; i++) {
                 pf2.send(Integer.toString(i), dest.getIp(), dest.getPort());
                 String received = pf2.receive();
+                System.out.println(received);
                 if (received != null) System.out.println(received);
             }
         }
