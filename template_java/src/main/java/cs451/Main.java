@@ -61,7 +61,8 @@ public class Main {
 //	    System.out.println("Broadcasting messages...");
 
         try {
-            testFairLossLinkTwoHosts(parser);
+//            testFairLossLinkTwoHosts(parser);
+            testPerfectLinkTwoHosts(parser);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -77,16 +78,32 @@ public class Main {
     }
 
     private static void testFairLossLinkTwoHosts(Parser parser) throws IOException {
+        System.out.println("Test fair-loss link");
+        Host h1 = parser.hosts().get(0);
+        Host h2 = parser.hosts().get(1);
+        if (parser.myId() == 1) {
+            FairLossLink fl1 = new FairLossLink(h1.getPort(), h1.getIp());
+            System.out.println("Sent Hi process 2");
+            fl1.send("Hi process 2",h2.getPort(), h2.getIp());
+            String received = fl1.receive();
+            if (received != null) System.out.println("Received " + received);
+        }
+
+        else {
+            FairLossLink fl2 = new FairLossLink(h2.getPort(), h2.getIp());
+            System.out.println("Sent Hi process 1");
+            fl2.send("Hi process 1",h1.getPort(), h1.getIp());
+            String received = fl2.receive();
+            if (received != null) System.out.println("Received " + received);
+        }
+    }
+
+    private static void testPerfectLinkTwoHosts(Parser parser) throws IOException {
         System.out.println("Test perfect link");
         Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
-            FairLossLink pf1 = new FairLossLink(h1.getPort(), h1.getIp());
-//            for (int i = 0; i < 5; i++) {
-//                pf1.send(Integer.toString(i),h2.getPort(), h2.getIp());
-//                String received = pf1.receive();
-//                if (received != null) System.out.println(received);
-//            }
+            PerfectLink pf1 = new PerfectLink(h1.getPort(), h1.getIp());
             System.out.println("Sent Hi process 2");
             pf1.send("Hi process 2",h2.getPort(), h2.getIp());
             String received = pf1.receive();
@@ -94,18 +111,11 @@ public class Main {
         }
 
         else {
-            FairLossLink pf2 = new FairLossLink(h2.getPort(), h2.getIp());
-//            for (int i = 5; i < 10; i++) {
-//                pf2.send(Integer.toString(i), h1.getPort(), h1.getIp());
-//                String received = pf2.receive();
-//                System.out.println(received);
-//                if (received != null) System.out.println(received);
-//            }
+            PerfectLink pf2 = new PerfectLink(h2.getPort(), h2.getIp());
             System.out.println("Sent Hi process 1");
             pf2.send("Hi process 1",h1.getPort(), h1.getIp());
             String received = pf2.receive();
             if (received != null) System.out.println("Received " + received);
         }
-
     }
 }
