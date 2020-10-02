@@ -59,7 +59,6 @@ public class Main {
 
 //	    System.out.println("Broadcasting messages...");
 
-        System.out.println("Test perfect link");
         try {
             testPerfectLink(parser);
         } catch (Exception e) {
@@ -70,13 +69,15 @@ public class Main {
 	    System.out.println("Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();
 
-	    while (true) {
-	        // Sleep for 1 hour
-	        Thread.sleep(60 * 60 * 1000);
-	    }
+//	    while (true) {
+//	        // Sleep for 1 hour
+//	        Thread.sleep(60 * 60 * 1000);
+//	    }
     }
 
     private static void testPerfectLink(Parser parser) throws IOException {
+        System.out.println("Test perfect link");
+        System.out.println("PID is " + parser.myId());
         if (parser.myId() == 1) {
             PerfectLink pf1 = new PerfectLink();
             Host dest = parser.hosts().get(1);
