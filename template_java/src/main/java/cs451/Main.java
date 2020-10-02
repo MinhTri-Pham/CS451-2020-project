@@ -87,9 +87,10 @@ public class Main {
 //                String received = pf1.receive();
 //                if (received != null) System.out.println(received);
 //            }
+            System.out.println("Sent Hi process 2");
             pf1.send("Hi process 2",h2.getPort(), h2.getIp());
             String received = pf1.receive();
-            if (received != null) System.out.println(received);
+            if (received != null) System.out.println("Received " + received);
         }
 
         else {
@@ -100,9 +101,10 @@ public class Main {
 //                System.out.println(received);
 //                if (received != null) System.out.println(received);
 //            }
+            System.out.println("Sent Hi process 1");
             pf2.send("Hi process 1",h1.getPort(), h1.getIp());
             String received = pf2.receive();
-            if (received != null) System.out.println(received);
+            if (received != null) System.out.println("Received " + received);
         }
 
     }
