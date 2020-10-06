@@ -1,5 +1,6 @@
 package cs451.links;
 
+import cs451.Message;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,6 +10,14 @@ public class FairLossLink {
 
     private DatagramSocket socket;
 
+    public FairLossLink() {
+        try {
+            socket = new DatagramSocket();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public FairLossLink(int sourcePort, String sourceIp) {
         try {
             socket = new DatagramSocket(sourcePort, InetAddress.getByName(sourceIp));
@@ -17,18 +26,25 @@ public class FairLossLink {
         }
     }
 
-    public void send(String message, int destPort, String destIp) throws IOException {
-        InetAddress ip = InetAddress.getByName(destIp);
-        byte[] buf = message.getBytes();
-        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, ip, destPort);
+    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
+        byte[] buf = message.toData();
+        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, destIp, destPort);
         socket.send(dpSend);
     }
 
-    public String receive() throws IOException {
+    public Message receive() throws IOException {
         byte[] rec = new byte[1024];
         DatagramPacket dpReceive = new DatagramPacket(rec, rec.length);
         socket.receive(dpReceive);
-        return new String(dpReceive.getData(),0, dpReceive.getLength());
+        return Message.fromData(dpReceive.getData());
+    }
+
+    public InetAddress getIP() {
+        return socket.getInetAddress();
+    }
+
+    public int getPort() {
+        return socket.getPort();
     }
 
 }

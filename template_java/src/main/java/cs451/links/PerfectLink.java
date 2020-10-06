@@ -1,25 +1,28 @@
 package cs451.links;
 
+import cs451.Message;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.InetAddress;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PerfectLink {
 
     private StubbornLink sl;
-    private List<String> delivered;
+    private Set<Message> delivered;
 
     public PerfectLink(int sourcePort, String sourceIp) {
         sl = new StubbornLink(sourcePort, sourceIp);
-        delivered = new ArrayList<>();
+        delivered = new HashSet<>();
     }
 
-    public void send(String message, int destPort, String destIp) throws IOException {
+    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
         sl.send(message,destPort,destIp);
     }
 
-    public String receive() throws IOException {
-        String received = sl.receive();
+    public Message receive() throws IOException {
+        Message received = sl.receive();
         if (!delivered.contains(received)) {
             delivered.add(received);
             return received;

@@ -6,6 +6,7 @@ import cs451.links.PerfectLink;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.Socket;
 
 public class Main {
@@ -61,8 +62,8 @@ public class Main {
 //	    System.out.println("Broadcasting messages...");
 
         try {
-//            testFairLossLinkTwoHosts(parser);
-            testPerfectLinkTwoHosts(parser);
+            testFairLossLinkTwoHosts(parser);
+//            testPerfectLinkTwoHosts(parser);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -83,17 +84,19 @@ public class Main {
         Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
             FairLossLink fl1 = new FairLossLink(h1.getPort(), h1.getIp());
-            System.out.println("Sent Hi process 2");
-            fl1.send("Hi process 2",h2.getPort(), h2.getIp());
-            String received = fl1.receive();
+            Message m1 = new Message(1);
+            System.out.println("Sending " + m1 + " to host 2");
+            fl1.send(m1,h2.getPort(), InetAddress.getByName(h2.getIp()));
+            Message received = fl1.receive();
             if (received != null) System.out.println("Received " + received);
         }
 
         else {
             FairLossLink fl2 = new FairLossLink(h2.getPort(), h2.getIp());
-            System.out.println("Sent Hi process 1");
-            fl2.send("Hi process 1",h1.getPort(), h1.getIp());
-            String received = fl2.receive();
+            Message m2 = new Message(2);
+            System.out.println("Sending " + m2 + " to host 1");
+            fl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
+            Message received = fl2.receive();
             if (received != null) System.out.println("Received " + received);
         }
     }
@@ -103,18 +106,20 @@ public class Main {
         Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
-            PerfectLink pf1 = new PerfectLink(h1.getPort(), h1.getIp());
-            System.out.println("Sent Hi process 2");
-            pf1.send("Hi process 2",h2.getPort(), h2.getIp());
-            String received = pf1.receive();
+            PerfectLink pl1 = new PerfectLink(h1.getPort(), h1.getIp());
+            Message m1 = new Message(1);
+            System.out.println("Sending " + m1 + " to host 2");
+            pl1.send(m1,h2.getPort(), InetAddress.getByName(h2.getIp()));
+            Message received = pl1.receive();
             if (received != null) System.out.println("Received " + received);
         }
 
         else {
-            PerfectLink pf2 = new PerfectLink(h2.getPort(), h2.getIp());
-            System.out.println("Sent Hi process 1");
-            pf2.send("Hi process 1",h1.getPort(), h1.getIp());
-            String received = pf2.receive();
+            PerfectLink pl2 = new PerfectLink(h2.getPort(), h2.getIp());
+            Message m2 = new Message(2);
+            System.out.println("Sending " + m2 + " to host 1");
+            pl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
+            Message received = pl2.receive();
             if (received != null) System.out.println("Received " + received);
         }
     }

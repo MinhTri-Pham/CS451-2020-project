@@ -1,5 +1,6 @@
 package cs451.broadcast;
 
+import cs451.Message;
 import cs451.links.*;
 import cs451.Host;
 
@@ -16,13 +17,13 @@ public class BestEffortBroadcast {
         pl = new PerfectLink(sourcePort, sourceIp);
     }
 
-    public void broadcast(String message) throws IOException {
+    public void broadcast(Message message) throws IOException {
         for (Host host : hosts) {
             pl.send(message, host.getPort(), host.getIp());
         }
     }
 
-    public String receive() throws IOException {
+    public Message receive() throws IOException {
         return pl.receive();
     }
 }
