@@ -62,8 +62,8 @@ public class Main {
 //	    System.out.println("Broadcasting messages...");
 
         try {
-            testFairLossLinkTwoHosts(parser);
-//            testPerfectLinkTwoHosts(parser);
+//            testFairLossLinkTwoHosts(parser);
+            testPerfectLinkTwoHosts(parser);
         } catch (Exception e) {
             e.printStackTrace();
         }
