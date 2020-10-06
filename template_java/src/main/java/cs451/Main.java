@@ -114,13 +114,13 @@ public class Main {
             if (received != null) System.out.println("Received " + received);
         }
 
-        else {
-            PerfectLink pl2 = new PerfectLink(h2.getPort(), h2.getIp());
-            Message m2 = new Message(2);
-            System.out.println("Sending " + m2 + " to host 1");
-            pl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
-            Message received = pl2.receive();
-            if (received != null) System.out.println("Received " + received);
-        }
+//        else {
+//            PerfectLink pl2 = new PerfectLink(h2.getPort(), h2.getIp());
+//            Message m2 = new Message(2);
+//            System.out.println("Sending " + m2 + " to host 1");
+//            pl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
+//            Message received = pl2.receive();
+//            if (received != null) System.out.println("Received " + received);
+//        }
     }
 }
