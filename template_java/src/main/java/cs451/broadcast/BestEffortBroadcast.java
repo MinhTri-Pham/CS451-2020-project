@@ -5,6 +5,7 @@ import cs451.links.*;
 import cs451.Host;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.List;
 
 public class BestEffortBroadcast {
@@ -19,7 +20,7 @@ public class BestEffortBroadcast {
 
     public void broadcast(Message message) throws IOException {
         for (Host host : hosts) {
-            pl.send(message, host.getPort(), host.getIp());
+            pl.send(message, host.getPort(), InetAddress.getByName(host.getIp()));
         }
     }
 
