@@ -2,12 +2,10 @@ package cs451;
 
 import cs451.links.FairLossLink;
 import cs451.links.PerfectLink;
+import cs451.links.StubbornLink;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.Socket;
 
 public class Main {
 
@@ -63,7 +61,7 @@ public class Main {
 
         try {
 //            testFairLossLinkTwoHosts(parser);
-            testPerfectLinkTwoHosts(parser);
+            testStubbornLink(parser);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -101,26 +99,26 @@ public class Main {
         }
     }
 
-    private static void testPerfectLinkTwoHosts(Parser parser) throws IOException {
-        System.out.println("Test perfect link");
+    private static void testStubbornLink(Parser parser) throws IOException {
+        System.out.println("Test (optimised) stubborn link");
         Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
         if (parser.myId() == 1) {
-            PerfectLink pl1 = new PerfectLink(h1.getPort(), h1.getIp());
+            StubbornLink sl1 = new StubbornLink(h1.getPort(), h1.getIp());
             Message m1 = new Message(1);
             System.out.println("Sending " + m1 + " to host 2");
-            pl1.send(m1,h2.getPort(), InetAddress.getByName(h2.getIp()));
-            Message received = pl1.receive();
+            sl1.send(m1,h2.getPort(), InetAddress.getByName(h2.getIp()));
+            Message received = sl1.receive();
             if (received != null) System.out.println("Received " + received);
         }
 
-//        else {
-//            PerfectLink pl2 = new PerfectLink(h2.getPort(), h2.getIp());
-//            Message m2 = new Message(2);
-//            System.out.println("Sending " + m2 + " to host 1");
-//            pl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
-//            Message received = pl2.receive();
-//            if (received != null) System.out.println("Received " + received);
-//        }
+        else {
+            StubbornLink pl2 = new StubbornLink(h2.getPort(), h2.getIp());
+            Message m2 = new Message(2);
+            System.out.println("Sending " + m2 + " to host 1");
+            pl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
+            Message received = pl2.receive();
+            if (received != null) System.out.println("Received " + received);
+        }
     }
 }

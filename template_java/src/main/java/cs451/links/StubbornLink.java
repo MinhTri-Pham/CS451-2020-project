@@ -20,6 +20,10 @@ public class StubbornLink {
             System.out.println("Sending message " + message);
             fllSend.send(message, destPort, destIp);
             Message received = fllRec.receive();
+            while(received == null) {
+                System.out.println("Waiting for message from recipient");
+                received = fllRec.receive();
+            }
             System.out.println("Received message " + received);
             if (received.getSeqNum() == message.getSeqNum() && received.isAck()) {
                 System.out.println("Got acknowledgment for sent message");
