@@ -12,7 +12,7 @@ public class PerfectLink {
     private StubbornLink sl;
     private Set<Message> delivered;
 
-    public PerfectLink(int sourcePort, String sourceIp) {
+    public PerfectLink(int sourcePort, InetAddress sourceIp) {
         sl = new StubbornLink(sourcePort, sourceIp);
         delivered = new HashSet<>();
     }
