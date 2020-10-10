@@ -1,22 +1,35 @@
 package cs451;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.util.Objects;
 
 public class Message implements Serializable {
 
     private int seqNum;
     private boolean isAck;
+    private int sourcePort;
+    private InetAddress sourceIp;
+    private int destPort;
+    private InetAddress destIp;
 
-    public Message(int seqNum, boolean isAck) {
+    public Message(int seqNum, boolean isAck, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
         this.seqNum = seqNum;
         this.isAck = isAck;
+        this.sourcePort = sourcePort;
+        this.sourceIp = sourceIp;
+        this.destPort = destPort;
+        this.destIp = destIp;
     }
 
     // Simpler constructor for non-ACK messages
-    public Message(int seqNum) {
+    public Message(int seqNum, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
         this.seqNum = seqNum;
         this.isAck = false;
+        this.sourcePort = sourcePort;
+        this.sourceIp = sourceIp;
+        this.destPort = destPort;
+        this.destIp = destIp;
     }
 
     public int getSeqNum() {
@@ -27,9 +40,25 @@ public class Message implements Serializable {
         return isAck;
     }
 
-    // Generate equivalent message but ACK
+    public int getSourcePort() {
+        return sourcePort;
+    }
+
+    public InetAddress getSourceIp() {
+        return sourceIp;
+    }
+
+    public int getDestPort() {
+        return destPort;
+    }
+
+    public InetAddress getDestIp() {
+        return destIp;
+    }
+
+    // Generate ACK message (note that we switch source and destination)
     public Message generateAck() {
-        return new Message(seqNum, true);
+        return new Message(seqNum, true, destPort, destIp, sourcePort, sourceIp);
     }
 
     public byte[] toData() throws IOException {
@@ -52,7 +81,7 @@ public class Message implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(seqNum, isAck);
+        return Objects.hash(seqNum, isAck, sourcePort, sourceIp, destPort, destIp);
     }
 
     @Override

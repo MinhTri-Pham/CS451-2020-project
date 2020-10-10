@@ -80,20 +80,24 @@ public class Main {
         System.out.println("Test fair-loss link");
         Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
+        int h1Port = h1.getPort();
+        InetAddress h1Ip = InetAddress.getByName(h1.getIp());
+        int h2Port = h2.getPort();
+        InetAddress h2Ip = InetAddress.getByName(h2.getIp());
         if (parser.myId() == 1) {
-            FairLossLink fl1 = new FairLossLink(h1.getPort(), h1.getIp());
-            Message m1 = new Message(1);
+            FairLossLink fl1 = new FairLossLink(h1Port, h1Ip);
+            Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
             System.out.println("Sending " + m1 + " to host 2");
-            fl1.send(m1,h2.getPort(), InetAddress.getByName(h2.getIp()));
+            fl1.send(m1,h2Port, h2Ip);
             Message received = fl1.receive();
             if (received != null) System.out.println("Received " + received);
         }
 
         else {
-            FairLossLink fl2 = new FairLossLink(h2.getPort(), h2.getIp());
-            Message m2 = new Message(2);
+            FairLossLink fl2 = new FairLossLink(h2Port, h2Ip);
+            Message m2 = new Message(2, h2Port, h2Ip, h1Port, h1Ip);
             System.out.println("Sending " + m2 + " to host 1");
-            fl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
+            fl2.send(m2,h1Port, h1Ip);
             Message received = fl2.receive();
             if (received != null) System.out.println("Received " + received);
         }
@@ -103,17 +107,21 @@ public class Main {
         System.out.println("Test (optimised) stubborn link");
         Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
+        int h1Port = h1.getPort();
+        InetAddress h1Ip = InetAddress.getByName(h1.getIp());
+        int h2Port = h2.getPort();
+        InetAddress h2Ip = InetAddress.getByName(h2.getIp());
         if (parser.myId() == 1) {
-            StubbornLink sl1 = new StubbornLink(h1.getPort(), h1.getIp());
-            Message m1 = new Message(1);
+            StubbornLink sl1 = new StubbornLink(h1Port, h1Ip);
+            Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
             System.out.println("Sending " + m1 + " to host 2");
-            sl1.send(m1,h2.getPort(), InetAddress.getByName(h2.getIp()));
+            sl1.send(m1,h2Port, h2Ip);
 //            Message received = sl1.receive();
 //            if (received != null) System.out.println("Received " + received);
         }
 
         else {
-            StubbornLink pl2 = new StubbornLink(h2.getPort(), h2.getIp());
+            StubbornLink pl2 = new StubbornLink(h2Port, h2Ip);
             pl2.receive();
 //            Message m2 = new Message(2);
 //            System.out.println("Sending " + m2 + " to host 1");

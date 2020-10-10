@@ -18,9 +18,9 @@ public class FairLossLink {
         }
     }
 
-    public FairLossLink(int sourcePort, String sourceIp) {
+    public FairLossLink(int sourcePort, InetAddress sourceIp) {
         try {
-            socket = new DatagramSocket(sourcePort, InetAddress.getByName(sourceIp));
+            socket = new DatagramSocket(sourcePort, sourceIp);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,13 +38,4 @@ public class FairLossLink {
         socket.receive(dpReceive);
         return Message.fromData(dpReceive.getData());
     }
-
-    public InetAddress getIP() {
-        return socket.getInetAddress();
-    }
-
-    public int getPort() {
-        return socket.getPort();
-    }
-
 }

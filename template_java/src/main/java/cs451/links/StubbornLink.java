@@ -9,7 +9,7 @@ public class StubbornLink {
     private FairLossLink fllSend; // Channel for sending data
     private FairLossLink fllRec; // Channel for receiving data/ACKs
 
-    public StubbornLink(int sourcePort, String sourceIp) {
+    public StubbornLink(int sourcePort, InetAddress sourceIp) {
         this.fllSend = new FairLossLink();
         this.fllRec = new FairLossLink(sourcePort, sourceIp);
     }
@@ -20,10 +20,6 @@ public class StubbornLink {
             System.out.println("Sending message " + message);
             fllSend.send(message, destPort, destIp);
             Message received = fllRec.receive();
-//            while(received == null) {
-//                System.out.println("Waiting for message from recipient");
-//                received = fllRec.receive();
-//            }
             System.out.println("Received message " + received);
             if (received.getSeqNum() == message.getSeqNum() && received.isAck()) {
                 System.out.println("Got acknowledgment for sent message");
@@ -36,13 +32,12 @@ public class StubbornLink {
 
     public Message receive() throws IOException {
         Message received = fllRec.receive();
+        System.out.println("Received message " + received);
         // Received data, send ACK
         if (!received.isAck()) {
             System.out.println("Sending ACK");
-            InetAddress destIp = fllRec.getIP();
-            int destPort = fllRec.getPort();
             Message ackMessage = received.generateAck();
-            fllSend.send(ackMessage, destPort, destIp);
+            fllSend.send(ackMessage, received.getSourcePort(), received.getSourceIp());
         }
         return received;
     }
