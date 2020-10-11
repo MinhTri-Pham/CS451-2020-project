@@ -35,13 +35,16 @@ public class StubbornLink {
         System.out.println("Received message " + received);
         int seqNum = received.getSeqNum();
         // Received data, send ACK
-        if (!received.isAck() && notAcked.contains(seqNum)) {
+        if (!received.isAck()) {
             System.out.println("Sending ACK to " + received);
             Message ackMessage = received.generateAck();
 //            fllSend.send(ackMessage, received.getSourcePort(), received.getSourceIp());
             fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
             notAcked.remove(seqNum);
         }
+        // Received ACK
+        else if (notAcked.contains(seqNum)) notAcked.remove(seqNum);
+        else System.out.println("Error: Received ACK to message not sent");
         return received;
     }
 }
