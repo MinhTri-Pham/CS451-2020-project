@@ -123,7 +123,7 @@ public class Main {
         }
 
         else {
-            Message m2 = new Message(2,h1Port, h1Ip, h2Port, h2Ip);
+            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
             System.out.println("Sending " + m2 + " to host 1");
             sl2.send(m2,h1Port, h1Ip);
             sl1.receive();
