@@ -36,8 +36,8 @@ public class StubbornLink {
         int seqNum = received.getSeqNum();
         // Received data, send ACK
         if (!received.isAck()) {
-            System.out.println("Sending ACK to " + received);
             Message ackMessage = received.generateAck();
+            System.out.println("Send ACK message " + ackMessage);
 //            fllSend.send(ackMessage, received.getSourcePort(), received.getSourceIp());
             fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
             notAcked.remove(seqNum);
