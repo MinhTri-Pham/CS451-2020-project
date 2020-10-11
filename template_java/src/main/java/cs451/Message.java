@@ -99,6 +99,11 @@ public class Message implements Serializable {
         if (isAck) msgtype = "ACK";
         else msgtype = "DATA";
         return "Message(" + msgtype
-                + ", seqNum: " + seqNum +")";
+                + ", seqNum: " + seqNum
+                + ", srcPort: " + sourcePort
+                + ", srcAddress: " + sourceIp
+                + ", destPort: " + destPort
+                + ", destAddress: " + destIp
+                + ")";
     }
 }

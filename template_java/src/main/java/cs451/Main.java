@@ -118,17 +118,17 @@ public class Main {
             System.out.println("Sending " + m1 + " to host 2");
             sl1.send(m1,h2Port, h2Ip);
             sl2.receive();
-            Message received = sl1.receive();
-            if (received != null) System.out.println("Received " + received);
+//            Message received = sl1.receive();
+//            if (received != null) System.out.println("Received " + received);
         }
 
-        else {
-            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
-            System.out.println("Sending " + m2 + " to host 1");
-            sl2.send(m2,h1Port, h1Ip);
-            sl1.receive();
-            Message received = sl2.receive();
-            if (received != null) System.out.println("Received " + received);
-        }
+//        else {
+//            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
+//            System.out.println("Sending " + m2 + " to host 1");
+//            sl2.send(m2,h1Port, h1Ip);
+//            sl1.receive();
+//            Message received = sl2.receive();
+//            if (received != null) System.out.println("Received " + received);
+//        }
     }
 }
