@@ -111,23 +111,24 @@ public class Main {
         InetAddress h1Ip = InetAddress.getByName(h1.getIp());
         int h2Port = h2.getPort();
         InetAddress h2Ip = InetAddress.getByName(h2.getIp());
+        StubbornLink sl1 = new StubbornLink(h1Port, h1Ip);
+        StubbornLink sl2 = new StubbornLink(h2Port, h2Ip);
         if (parser.myId() == 1) {
-            StubbornLink sl1 = new StubbornLink(h1Port, h1Ip);
             Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
             System.out.println("Sending " + m1 + " to host 2");
             sl1.send(m1,h2Port, h2Ip);
-//            Message received = sl1.receive();
-//            if (received != null) System.out.println("Received " + received);
+            sl2.receive();
+            Message received = sl1.receive();
+            if (received != null) System.out.println("Received " + received);
         }
 
         else {
-            StubbornLink pl2 = new StubbornLink(h2Port, h2Ip);
-            pl2.receive();
-//            Message m2 = new Message(2);
-//            System.out.println("Sending " + m2 + " to host 1");
-//            pl2.send(new Message(2),h1.getPort(), InetAddress.getByName(h1.getIp()));
-//            Message received = pl2.receive();
-//            if (received != null) System.out.println("Received " + received);
+            Message m2 = new Message(2,h1Port, h1Ip, h2Port, h2Ip);
+            System.out.println("Sending " + m2 + " to host 1");
+            sl2.send(m2,h1Port, h1Ip);
+            sl1.receive();
+            Message received = sl2.receive();
+            if (received != null) System.out.println("Received " + received);
         }
     }
 }
