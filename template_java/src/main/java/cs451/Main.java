@@ -113,20 +113,32 @@ public class Main {
         InetAddress h2Ip = InetAddress.getByName(h2.getIp());
         if (parser.myId() == 1) {
             StubbornLink sl1 = new StubbornLink(h1Port, h1Ip);
-            Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
-            sl1.send(m1,h2Port, h2Ip);
+//            Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
+//            sl1.send(m1,h2Port, h2Ip);
+//            sl1.receive();
+//            sl1.receive();
+
+            for (int i = 1; i <= 5; i++) {
+            Message m = new Message(i, h1Port, h1Ip, h2Port, h2Ip);
+            sl1.send(m,h2Port, h2Ip);
             sl1.receive();
             sl1.receive();
+            }
         }
 
         else {
             StubbornLink sl2 = new StubbornLink(h2Port, h2Ip);
-            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
-            sl2.send(m2,h1Port, h1Ip);
-            sl2.receive();
 //            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
 //            sl2.send(m2,h1Port, h1Ip);
-            sl2.receive();
+//            sl2.receive();
+//            sl2.receive();
+
+            for (int i = 6; i <= 10; i++) {
+                Message m = new Message(i, h1Port, h1Ip, h2Port, h2Ip);
+                sl2.send(m,h2Port, h2Ip);
+                sl2.receive();
+                sl2.receive();
+            }
         }
     }
 }
