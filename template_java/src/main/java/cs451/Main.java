@@ -117,18 +117,15 @@ public class Main {
             sl1.send(m1,h2Port, h2Ip);
             sl1.receive();
             sl1.receive();
-//            Message received = sl1.receive();
-//            if (received != null) System.out.println("Received " + received);
         }
 
         else {
             StubbornLink sl2 = new StubbornLink(h2Port, h2Ip);
-            sl2.receive();
             Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
+            sl2.receive();
+//            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
             sl2.send(m2,h1Port, h1Ip);
             sl2.receive();
-//            Message received = sl2.receive();
-//            if (received != null) System.out.println("Received " + received);
         }
     }
 }
