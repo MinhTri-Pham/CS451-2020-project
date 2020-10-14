@@ -134,7 +134,7 @@ public class Main {
 //            sl2.receive();
 
             for (int i = 6; i <= 10; i++) {
-                Message m = new Message(i, h1Port, h1Ip, h2Port, h2Ip);
+                Message m = new Message(i, h2Port, h2Ip, h1Port, h1Ip);
                 sl2.send(m,h1Port, h1Ip);
                 sl2.receive();
                 sl2.receive();
