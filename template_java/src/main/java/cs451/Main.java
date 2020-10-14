@@ -116,7 +116,7 @@ public class Main {
             Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
             System.out.println("Sending " + m1 + " to host 2");
             sl1.send(m1,h2Port, h2Ip);
-            sl1.receive()
+            sl1.receive();
 //            Message received = sl1.receive();
 //            if (received != null) System.out.println("Received " + received);
         }
