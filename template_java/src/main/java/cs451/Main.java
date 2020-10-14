@@ -119,10 +119,10 @@ public class Main {
 //            sl1.receive();
 
             for (int i = 1; i <= 5; i++) {
-            Message m = new Message(i, h1Port, h1Ip, h2Port, h2Ip);
-            sl1.send(m,h2Port, h2Ip);
-            sl1.receive();
-            sl1.receive();
+                Message m = new Message(i, h1Port, h1Ip, h2Port, h2Ip);
+                sl1.send(m,h2Port, h2Ip);
+                sl1.receive();
+                sl1.receive();
             }
         }
 
