@@ -120,7 +120,7 @@ public class Main {
 //            if (received != null) System.out.println("Received " + received);
         }
 
-//        else {
+        else {
             StubbornLink sl2 = new StubbornLink(h2Port, h2Ip);
             sl2.receive();
 //            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
@@ -129,6 +129,6 @@ public class Main {
 //            sl1.receive();
 //            Message received = sl2.receive();
 //            if (received != null) System.out.println("Received " + received);
-//        }
+        }
     }
 }

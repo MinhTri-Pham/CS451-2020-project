@@ -12,6 +12,7 @@ public class FairLossLink {
 
 
     public FairLossLink(int sourcePort, InetAddress sourceIp) {
+        System.out.println("Init");
         try {
             socket = new DatagramSocket(sourcePort, sourceIp);
         } catch (Exception e) {
@@ -26,7 +27,7 @@ public class FairLossLink {
     }
 
     public Message receive() throws IOException {
-        System.out.println("Print");
+        System.out.println("Recv");
         byte[] rec = new byte[1024];
         DatagramPacket dpReceive = new DatagramPacket(rec, rec.length);
         socket.receive(dpReceive);
