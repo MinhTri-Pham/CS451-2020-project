@@ -122,9 +122,10 @@ public class Main {
         else {
             StubbornLink sl2 = new StubbornLink(h2Port, h2Ip);
             Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
+            sl2.send(m2,h1Port, h1Ip);
             sl2.receive();
 //            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
-            sl2.send(m2,h1Port, h1Ip);
+//            sl2.send(m2,h1Port, h1Ip);
             sl2.receive();
         }
     }
