@@ -12,8 +12,8 @@ public class PerfectLink {
     private StubbornLink sl;
     private Set<Message> delivered;
 
-    public PerfectLink(int sourcePort, InetAddress sourceIp) {
-        sl = new StubbornLink(sourcePort, sourceIp);
+    public PerfectLink(int pid, int sourcePort, InetAddress sourceIp) {
+        sl = new StubbornLink(pid, sourcePort, sourceIp);
         delivered = new HashSet<>();
     }
 

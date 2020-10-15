@@ -13,9 +13,9 @@ public class BestEffortBroadcast {
     private PerfectLink pl;
     private List<Host> hosts;
 
-    public BestEffortBroadcast(int sourcePort, InetAddress sourceIp,List<Host> hosts) {
+    public BestEffortBroadcast(int pid, int sourcePort, InetAddress sourceIp,List<Host> hosts) {
         this.hosts = hosts;
-        pl = new PerfectLink(sourcePort, sourceIp);
+        pl = new PerfectLink(pid, sourcePort, sourceIp);
     }
 
     public void broadcast(Message message) throws IOException {

@@ -6,6 +6,7 @@ import java.util.Objects;
 
 public class Message implements Serializable {
 
+    private int senderId;
     private int seqNum;
     private boolean isAck;
     private int sourcePort;
@@ -13,7 +14,8 @@ public class Message implements Serializable {
     private int destPort;
     private InetAddress destIp;
 
-    public Message(int seqNum, boolean isAck, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
+    public Message(int sendId, int seqNum, boolean isAck, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
+        this.senderId = sendId;
         this.seqNum = seqNum;
         this.isAck = isAck;
         this.sourcePort = sourcePort;
@@ -22,14 +24,18 @@ public class Message implements Serializable {
         this.destIp = destIp;
     }
 
-    // Simpler constructor for non-ACK messages
-    public Message(int seqNum, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
+    public Message(int sendId, int seqNum, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
+        this.senderId = sendId;
         this.seqNum = seqNum;
         this.isAck = false;
         this.sourcePort = sourcePort;
         this.sourceIp = sourceIp;
         this.destPort = destPort;
         this.destIp = destIp;
+    }
+
+    public int getSenderId() {
+        return senderId;
     }
 
     public int getSeqNum() {
@@ -48,17 +54,14 @@ public class Message implements Serializable {
         return sourceIp;
     }
 
-    public int getDestPort() {
-        return destPort;
-    }
-
-    public InetAddress getDestIp() {
-        return destIp;
-    }
-
     // Generate ACK message (note that we switch source and destination)
-    public Message generateAck() {
-        return new Message(seqNum, true, destPort, destIp, sourcePort, sourceIp);
+    public Message generateAck(int pid) {
+        return new Message(pid, seqNum, true, destPort, destIp, sourcePort, sourceIp);
+    }
+
+    // Message with given sequence number
+    public Message withSeqNum(int sn) {
+        return new Message(senderId, sn, isAck, destPort, destIp, sourcePort, sourceIp);
     }
 
     public byte[] toData() throws IOException {
@@ -81,7 +84,7 @@ public class Message implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(seqNum, isAck, sourcePort, sourceIp, destPort, destIp);
+        return Objects.hash(senderId, seqNum, isAck, sourcePort, sourceIp, destPort, destIp);
     }
 
     @Override
@@ -95,15 +98,16 @@ public class Message implements Serializable {
 
     @Override
     public String toString() {
-        String msgtype;
-        if (isAck) msgtype = "ACK";
-        else msgtype = "DATA";
-        return "Message(" + msgtype
+        String msgType;
+        if (isAck) msgType = "ACK";
+        else msgType = "DATA";
+        return "Message(" + msgType
+                + ", sendId: " + senderId
                 + ", seqNum: " + seqNum
                 + ", srcPort: " + sourcePort
-                + ", srcAddress: " + sourceIp
+                + ", srcAddr: " + sourceIp
                 + ", destPort: " + destPort
-                + ", destAddress: " + destIp
+                + ", destAddr: " + destIp
                 + ")";
     }
 }

@@ -9,10 +9,12 @@ import java.util.Set;
 
 
 public class StubbornLink {
+    private int pid;
     private FairLossLink fll; // Channel for sending and receiving
     private Set<Integer> notAcked; // Messages not acknowledged yet
 
-    public StubbornLink(int sourcePort, InetAddress sourceIp) {
+    public StubbornLink(int pid, int sourcePort, InetAddress sourceIp) {
+        this.pid = pid;
         this.fll = new FairLossLink(sourcePort, sourceIp);
         this.notAcked = new HashSet<>();
     }
@@ -23,14 +25,13 @@ public class StubbornLink {
         notAcked.add(message.getSeqNum());
     }
 
-
     public Message receive() throws IOException {
         Message received = fll.receive();
         System.out.println("Received message " + received);
         int seqNum = received.getSeqNum();
         // Received data, send ACK
         if (!received.isAck()) {
-            Message ackMessage = received.generateAck();
+            Message ackMessage = received.generateAck(pid);
             System.out.println("Send ACK message " + ackMessage);
             fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
             notAcked.remove(seqNum);

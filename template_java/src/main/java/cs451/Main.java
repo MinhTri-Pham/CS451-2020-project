@@ -86,7 +86,7 @@ public class Main {
         InetAddress h2Ip = InetAddress.getByName(h2.getIp());
         if (parser.myId() == 1) {
             FairLossLink fl1 = new FairLossLink(h1Port, h1Ip);
-            Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
+            Message m1 = new Message(1, 1, h1Port, h1Ip, h2Port, h2Ip);
             System.out.println("Sending " + m1 + " to host 2");
             fl1.send(m1,h2Port, h2Ip);
             Message received = fl1.receive();
@@ -95,7 +95,7 @@ public class Main {
 
         else {
             FairLossLink fl2 = new FairLossLink(h2Port, h2Ip);
-            Message m2 = new Message(2, h2Port, h2Ip, h1Port, h1Ip);
+            Message m2 = new Message(2,2, h2Port, h2Ip, h1Port, h1Ip);
             System.out.println("Sending " + m2 + " to host 1");
             fl2.send(m2,h1Port, h1Ip);
             Message received = fl2.receive();
@@ -112,14 +112,9 @@ public class Main {
         int h2Port = h2.getPort();
         InetAddress h2Ip = InetAddress.getByName(h2.getIp());
         if (parser.myId() == 1) {
-            StubbornLink sl1 = new StubbornLink(h1Port, h1Ip);
-//            Message m1 = new Message(1, h1Port, h1Ip, h2Port, h2Ip);
-//            sl1.send(m1,h2Port, h2Ip);
-//            sl1.receive();
-//            sl1.receive();
-
+            StubbornLink sl1 = new StubbornLink(1, h1Port, h1Ip);
             for (int i = 1; i <= 5; i++) {
-                Message m = new Message(i, h1Port, h1Ip, h2Port, h2Ip);
+                Message m = new Message(1, i, h1Port, h1Ip, h2Port, h2Ip);
                 sl1.send(m,h2Port, h2Ip);
                 sl1.receive();
                 sl1.receive();
@@ -127,14 +122,9 @@ public class Main {
         }
 
         else {
-            StubbornLink sl2 = new StubbornLink(h2Port, h2Ip);
-//            Message m2 = new Message(2,h2Port, h2Ip, h1Port, h1Ip);
-//            sl2.send(m2,h1Port, h1Ip);
-//            sl2.receive();
-//            sl2.receive();
-
+            StubbornLink sl2 = new StubbornLink(2,h2Port, h2Ip);
             for (int i = 6; i <= 10; i++) {
-                Message m = new Message(i, h2Port, h2Ip, h1Port, h1Ip);
+                Message m = new Message(2,i, h2Port, h2Ip, h1Port, h1Ip);
                 sl2.send(m,h1Port, h1Ip);
                 sl2.receive();
                 sl2.receive();
