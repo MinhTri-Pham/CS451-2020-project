@@ -25,14 +25,17 @@ public class StubbornLink {
         fll.send(message, destPort, destIp);
         notAcked.add(message.getSeqNum());
         // Stop-and-go protocol
-        try {
-            System.out.println("Waiting for ACK");
-            TimeUnit.MILLISECONDS.sleep(250);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
-        while(notAcked.contains(message.getSeqNum())) {
-            fll.send(message, destPort, destIp);
+        if (!message.isAck()) {
+            try {
+                System.out.println("Waiting for ACK");
+                TimeUnit.MILLISECONDS.sleep(250);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            fll.receive();
+            while(notAcked.contains(message.getSeqNum())) {
+                fll.send(message, destPort, destIp);
+            }
         }
     }
 
@@ -45,7 +48,6 @@ public class StubbornLink {
             Message ackMessage = received.generateAck(pid);
             System.out.println("Send ACK message " + ackMessage);
             fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
-            notAcked.remove(seqNum);
         }
         // Received ACK
         else if (notAcked.contains(seqNum)) notAcked.remove(seqNum);
