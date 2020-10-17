@@ -35,7 +35,8 @@ public class StubbornLink {
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                receive();
+                Message rec = receive();
+                System.out.println(rec);
                 acked = notAcked.contains(seqNum);
                 if (!acked) {
                     System.out.println("Haven't received ACK, retransmit");
