@@ -23,19 +23,20 @@ public class StubbornLink {
     public void send(Message message, int destPort, InetAddress destIp) throws IOException {
         System.out.println("Sending message " + message);
         fll.send(message, destPort, destIp);
-        notAcked.add(message.getSeqNum());
+        int seqNum = message.getSeqNum();
+        notAcked.add(seqNum);
         boolean acked = false;
         // Retransmit if ACK not received within some time
         if (!message.isAck()) {
             while(!acked) {
+                receive();
                 try {
                     System.out.println("Waiting for ACK");
-                    TimeUnit.MILLISECONDS.sleep(250);
+                    TimeUnit.MILLISECONDS.sleep(1000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                receive();
-                acked = notAcked.contains(message.getSeqNum());
+                acked = notAcked.contains(seqNum);
                 if (!acked) {
                     System.out.println("Haven't received ACK, retransmit");
                     fll.send(message, destPort, destIp);
