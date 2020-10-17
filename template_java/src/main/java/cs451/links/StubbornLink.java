@@ -34,7 +34,7 @@ public class StubbornLink {
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                fll.receive();
+                receive();
                 acked = notAcked.contains(message.getSeqNum());
                 if (!acked) fll.send(message, destPort, destIp);
             }
