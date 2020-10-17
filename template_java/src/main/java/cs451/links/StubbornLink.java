@@ -36,7 +36,11 @@ public class StubbornLink {
                 }
                 receive();
                 acked = notAcked.contains(message.getSeqNum());
-                if (!acked) fll.send(message, destPort, destIp);
+                if (!acked) {
+                    System.out.println("Haven't received ACK, retransmit");
+                    fll.send(message, destPort, destIp);
+                }
+                else System.out.println("Received ACK");
             }
         }
     }
