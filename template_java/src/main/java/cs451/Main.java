@@ -122,13 +122,14 @@ public class Main {
         }
 
         else {
-            StubbornLink sl2 = new StubbornLink(2,h2Port, h2Ip);
-            for (int i = 6; i <= 10; i++) {
-                Message m = new Message(2,i, h2Port, h2Ip, h1Port, h1Ip);
-                sl2.send(m,h1Port, h1Ip);
+//            StubbornLink sl2 = new StubbornLink(2,h2Port, h2Ip);
+//            for (int i = 6; i <= 10; i++) {
+//                Message m = new Message(2,i, h2Port, h2Ip, h1Port, h1Ip);
+//                sl2.send(m,h1Port, h1Ip);
 //                sl2.receive();
 //                sl2.receive();
-            }
+//            }
+            new StubbornLink(2,h2Port, h2Ip);
         }
     }
 }

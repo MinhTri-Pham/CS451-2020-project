@@ -25,7 +25,7 @@ public class StubbornLink {
         fll.send(message, destPort, destIp);
         notAcked.add(message.getSeqNum());
         boolean acked = false;
-        // Stop-and-go protocol
+        // Retransmit if ACK not received within some time
         if (!message.isAck()) {
             while(!acked) {
                 try {
@@ -51,7 +51,7 @@ public class StubbornLink {
         // Received data, send ACK
         if (!received.isAck()) {
             Message ackMessage = received.generateAck(pid);
-            System.out.println("Send ACK message " + ackMessage);
+            System.out.println("Send ACK for message with seqNum " + seqNum);
             fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
         }
         // Received ACK
