@@ -35,7 +35,7 @@ public class StubbornLink {
 //                } catch (InterruptedException ie) {
 //                    Thread.currentThread().interrupt();
 //                }
-                Message rec = receive();
+                Message rec = this.receive();
                 System.out.println(rec);
                 acked = notAcked.contains(seqNum);
                 if (!acked) {
