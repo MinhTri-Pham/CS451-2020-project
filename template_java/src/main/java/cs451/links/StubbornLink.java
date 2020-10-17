@@ -26,6 +26,7 @@ public class StubbornLink {
         notAcked.add(message.getSeqNum());
         // Stop-and-go protocol
         try {
+            System.out.println("Waiting for ACK");
             TimeUnit.MILLISECONDS.sleep(250);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
