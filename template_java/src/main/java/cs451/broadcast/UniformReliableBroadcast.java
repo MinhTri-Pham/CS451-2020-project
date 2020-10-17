@@ -51,6 +51,7 @@ public class UniformReliableBroadcast {
             if (canDeliver(pendingMsg) && !delivered.contains(pendingMsg))
                 delivered.add(pendingMsg);
         }
+        // Deliver
     }
 
     private static class Pair<A, B> {

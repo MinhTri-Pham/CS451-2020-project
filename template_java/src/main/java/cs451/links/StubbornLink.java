@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 
 public class StubbornLink {
@@ -23,6 +24,15 @@ public class StubbornLink {
         System.out.println("Sending message " + message);
         fll.send(message, destPort, destIp);
         notAcked.add(message.getSeqNum());
+        // Stop-and-go protocol
+        try {
+            TimeUnit.MILLISECONDS.sleep(250);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+        while(notAcked.contains(message.getSeqNum())) {
+            fll.send(message, destPort, destIp);
+        }
     }
 
     public Message receive() throws IOException {
