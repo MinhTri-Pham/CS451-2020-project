@@ -24,17 +24,19 @@ public class StubbornLink {
         System.out.println("Sending message " + message);
         fll.send(message, destPort, destIp);
         notAcked.add(message.getSeqNum());
+        boolean acked = false;
         // Stop-and-go protocol
         if (!message.isAck()) {
-            try {
-                System.out.println("Waiting for ACK");
-                TimeUnit.MILLISECONDS.sleep(250);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
-            fll.receive();
-            while(notAcked.contains(message.getSeqNum())) {
-                fll.send(message, destPort, destIp);
+            while(!acked) {
+                try {
+                    System.out.println("Waiting for ACK");
+                    TimeUnit.MILLISECONDS.sleep(250);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+                fll.receive();
+                acked = notAcked.contains(message.getSeqNum());
+                if (!acked) fll.send(message, destPort, destIp);
             }
         }
     }
