@@ -29,12 +29,12 @@ public class StubbornLink {
         // Retransmit if ACK not received within some time
         if (!message.isAck()) {
             while(!acked) {
-                try {
-                    System.out.println("Waiting for ACK");
-                    TimeUnit.MILLISECONDS.sleep(1000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
+//                try {
+//                    System.out.println("Waiting for ACK");
+//                    TimeUnit.MILLISECONDS.sleep(1000);
+//                } catch (InterruptedException ie) {
+//                    Thread.currentThread().interrupt();
+//                }
                 Message rec = receive();
                 System.out.println(rec);
                 acked = notAcked.contains(seqNum);
