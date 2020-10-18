@@ -25,24 +25,24 @@ public class StubbornLink {
         fll.send(message, destPort, destIp);
         int seqNum = message.getSeqNum();
         notAcked.add(seqNum);
-        boolean acked = false;
-        // Retransmit if ACK not received within some time
-        if (!message.isAck()) {
-            while(!acked) {
-                try {
-                    System.out.println("Waiting for ACK");
-                    TimeUnit.MILLISECONDS.sleep(250);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-                receive();
-                acked = !notAcked.contains(seqNum);
-                if (!acked) {
-                    System.out.println("Haven't received ACK, retransmit");
-                    fll.send(message, destPort, destIp);
-                }
-            }
-        }
+//        boolean acked = false;
+//        // Retransmit if ACK not received within some time
+//        if (!message.isAck()) {
+//            while(!acked) {
+//                try {
+//                    System.out.println("Waiting for ACK");
+//                    TimeUnit.MILLISECONDS.sleep(250);
+//                } catch (InterruptedException ie) {
+//                    Thread.currentThread().interrupt();
+//                }
+//                receive();
+//                acked = !notAcked.contains(seqNum);
+//                if (!acked) {
+//                    System.out.println("Haven't received ACK, retransmit");
+//                    fll.send(message, destPort, destIp);
+//                }
+//            }
+//        }
     }
 
     public Message receive() throws IOException {
