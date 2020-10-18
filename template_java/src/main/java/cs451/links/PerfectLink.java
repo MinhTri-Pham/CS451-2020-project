@@ -17,8 +17,8 @@ public class PerfectLink {
         delivered = new HashSet<>();
     }
 
-    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
-        sl.send(message,destPort,destIp);
+    public void send(Message message) throws IOException {
+        sl.send(message);
     }
 
     public Message receive() throws IOException {

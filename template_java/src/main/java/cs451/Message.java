@@ -14,6 +14,7 @@ public class Message implements Serializable {
     private int destPort;
     private InetAddress destIp;
 
+
     public Message(int sendId, int seqNum, boolean isAck, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
         this.senderId = sendId;
         this.seqNum = seqNum;
@@ -52,6 +53,14 @@ public class Message implements Serializable {
 
     public InetAddress getSourceIp() {
         return sourceIp;
+    }
+
+    public int getDestPort() {
+        return destPort;
+    }
+
+    public InetAddress getDestIp() {
+        return destIp;
     }
 
     // Generate ACK message (note that we switch source and destination)

@@ -19,9 +19,9 @@ public class FairLossLink {
         }
     }
 
-    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
+    public void send(Message message) throws IOException {
         byte[] buf = message.toData();
-        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, destIp, destPort);
+        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, message.getDestIp(), message.getDestPort());
         socket.send(dpSend);
     }
 
