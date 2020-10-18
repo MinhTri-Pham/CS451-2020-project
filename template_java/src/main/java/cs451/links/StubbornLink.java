@@ -20,9 +20,9 @@ public class StubbornLink {
         this.notAcked = new HashSet<>();
     }
 
-    public void send(Message message) throws IOException {
+    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
         System.out.println("Sending message " + message);
-        fll.send(message);
+        fll.send(message, destPort, destIp);
         int seqNum = message.getSeqNum();
         notAcked.add(seqNum);
         boolean acked = false;
@@ -39,7 +39,7 @@ public class StubbornLink {
                 acked = !notAcked.contains(seqNum);
                 if (!acked) {
                     System.out.println("Haven't received ACK, retransmit");
-                    fll.send(message);
+                    fll.send(message, destPort, destIp);
                 }
             }
         }
@@ -53,7 +53,7 @@ public class StubbornLink {
         if (!received.isAck()) {
             Message ackMessage = received.generateAck(pid);
             System.out.println("Send ACK for message with seqNum " + seqNum);
-            fll.send(ackMessage);
+            fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
         }
         // Received ACK
         else if (notAcked.contains(seqNum)) {

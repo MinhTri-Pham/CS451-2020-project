@@ -87,7 +87,7 @@ public class Main {
             StubbornLink sl1 = new StubbornLink(1, h1Port, h1Ip);
             for (int i = 1; i <= 5; i++) {
                 Message m = new Message(1, i, h1Port, h1Ip, h2Port, h2Ip);
-                sl1.send(m);
+                sl1.send(m,h2Port, h2Ip);
 //                sl1.receive();
 //                sl1.receive();
             }
@@ -97,7 +97,7 @@ public class Main {
             StubbornLink sl2 = new StubbornLink(2,h2Port, h2Ip);
             for (int i = 6; i <= 10; i++) {
 //                Message m = new Message(2,i, h2Port, h2Ip, h1Port, h1Ip);
-//                sl2.send(m);
+//                sl2.send(m,h1Port, h1Ip);
                 sl2.receive();
 //                sl2.receive();
             }

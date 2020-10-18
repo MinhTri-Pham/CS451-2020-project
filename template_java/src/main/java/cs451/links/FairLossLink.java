@@ -1,5 +1,6 @@
 package cs451.links;
 
+import cs451.Host;
 import cs451.Message;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -19,9 +20,9 @@ public class FairLossLink {
         }
     }
 
-    public void send(Message message) throws IOException {
+    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
         byte[] buf = message.toData();
-        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, message.getDestIp(), message.getDestPort());
+        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, destIp, destPort);
         socket.send(dpSend);
     }
 
