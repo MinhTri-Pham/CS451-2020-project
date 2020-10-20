@@ -57,14 +57,7 @@ public class Main {
 	    System.out.println("Waiting for all processes for finish initialization");
         coordinator.waitOnBarrier();
 
-//	    System.out.println("Broadcasting messages...");
-
-        try {
-            testStubbornLink(parser);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+	    System.out.println("Broadcasting messages...");
 
 	    System.out.println("Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();
@@ -75,33 +68,5 @@ public class Main {
 	    }
     }
 
-    private static void testStubbornLink(Parser parser) throws IOException {
-        System.out.println("Test (optimised) stubborn link");
-        Host h1 = parser.hosts().get(0);
-        Host h2 = parser.hosts().get(1);
-        int h1Port = h1.getPort();
-        InetAddress h1Ip = InetAddress.getByName(h1.getIp());
-        int h2Port = h2.getPort();
-        InetAddress h2Ip = InetAddress.getByName(h2.getIp());
-        if (parser.myId() == 1) {
-            StubbornLink sl1 = new StubbornLink(1, h1Port, h1Ip);
-            for (int i = 1; i <= 5; i++) {
-                Message m = new Message(1, i, h1Port, h1Ip, h2Port, h2Ip);
-                sl1.send(m,h2Port, h2Ip);
-                sl1.receive();
-                sl1.receive();
-            }
-        }
 
-        else {
-            StubbornLink sl2 = new StubbornLink(2,h2Port, h2Ip);
-            for (int i = 6; i <= 10; i++) {
-                Message m = new Message(2,i, h2Port, h2Ip, h1Port, h1Ip);
-                sl2.send(m,h1Port, h1Ip);
-                sl2.receive();
-                sl2.receive();
-            }
-
-        }
-    }
 }

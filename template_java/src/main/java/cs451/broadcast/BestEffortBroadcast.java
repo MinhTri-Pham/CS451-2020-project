@@ -24,7 +24,7 @@ public class BestEffortBroadcast {
         }
     }
 
-    public Message receive() throws IOException {
+    public Message deliver() throws IOException {
         return pl.receive();
     }
 }
