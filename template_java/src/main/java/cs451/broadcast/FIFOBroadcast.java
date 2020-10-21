@@ -5,10 +5,7 @@ import cs451.Message;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class FIFOBroadcast {
     private UniformReliableBroadcast urb;
@@ -16,9 +13,9 @@ public class FIFOBroadcast {
     private Set<Message> pending;
     private int[] next;
 
-    public FIFOBroadcast(int pid, int sourcePort, InetAddress sourceIp, List<Host> hosts) {
+    public FIFOBroadcast(int pid, int sourcePort, InetAddress sourceIp, List<Host> hosts, Map<Integer, Host> idToHost) {
         // Implements Broadcast with Sequence Number algorithm
-        this.urb = new UniformReliableBroadcast(pid, sourcePort, sourceIp, hosts);
+        this.urb = new UniformReliableBroadcast(pid, sourcePort, sourceIp, hosts, idToHost);
         this.lsn = 1;
         this.pending = new HashSet<>();
         this.next = new int[hosts.size()];
@@ -30,15 +27,20 @@ public class FIFOBroadcast {
         urb.broadcast(m.withSeqNum(lsn));
     }
 
-    public void deliver(Message m) {
-        pending.add(m);
+    public Message deliver() throws IOException {
+        Message urbDelivered = urb.deliver();
+        pending.add(urbDelivered);
         for (Message pendingMsg : pending) {
             if (next[pendingMsg.getSenderId()] == pendingMsg.getSeqNum()) {
                 next[pendingMsg.getSenderId()]++;
                 pending.remove(pendingMsg);
+                // Don't think this return is right
+                // Specification implies we should deliver all such messages
+                return pendingMsg;
             }
         }
-        // Deliver
+        // Not sure about this
+        return null;
     }
 
 }

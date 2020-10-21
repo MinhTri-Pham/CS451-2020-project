@@ -1,26 +1,28 @@
 package cs451.links;
 
+import cs451.Host;
 import cs451.Message;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class PerfectLink {
 
-    private StubbornLink sl;
-    private Set<Integer> extra;
-    private int maxContiguous;
+    private StubbornLink sl; // Underlying channel
+    private Set<Integer> extra; // Set of sequence numbers bigger than maxContiguous + 1  of received messages
+    private int maxContiguous; // Maximum sequence number n such that all messages 1,...,n have been received
 
-    public PerfectLink(int pid, int sourcePort, InetAddress sourceIp) {
-        sl = new StubbornLink(pid, sourcePort, sourceIp);
+    public PerfectLink(int pid, int sourcePort, InetAddress sourceIp, Map<Integer, Host> idToHost) {
+        sl = new StubbornLink(pid, sourcePort, sourceIp, idToHost);
         extra = new HashSet<>();
         maxContiguous = 0;
     }
 
-    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
-        sl.send(message,destPort,destIp);
+    public void send(Message message, Host host) throws IOException {
+        sl.send(message,host);
     }
 
     public Message receive() throws IOException {

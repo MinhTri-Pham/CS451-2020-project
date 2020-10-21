@@ -12,15 +12,18 @@ public class UniformReliableBroadcast {
     // Implements Majority ACK algorithm
     private Integer pid; // Pid of broadcaster (represents self in the algorithm)
     private BestEffortBroadcast beb;
-    private Set<Message> delivered;
+//    private Set<Message> delivered;
+    private Set<Integer> extra; // Set of sequence numbers bigger than maxContiguous + 1  of received messages
+    private int maxContiguous; // Maximum sequence number n such that all messages 1,...,n have been received
     private Set<Pair<Integer, Message>> pending;
     private Map<Message, Set<Integer>> ack;
     private List<Host> hosts;
 
-    public UniformReliableBroadcast(int pid, int sourcePort, InetAddress sourceIp, List<Host> hosts) {
+    public UniformReliableBroadcast(int pid, int sourcePort, InetAddress sourceIp, List<Host> hosts, Map<Integer, Host> idToHost) {
         this.pid = pid;
-        this.beb = new BestEffortBroadcast(pid, sourcePort, sourceIp, hosts);
-        this.delivered = new HashSet<>();
+        this.beb = new BestEffortBroadcast(pid, sourcePort, sourceIp, hosts, idToHost);
+        this.extra = new HashSet<>();
+        this.maxContiguous = 0;
         this.pending =  new HashSet<>();
         this.ack = new HashMap<>();
         this.hosts = hosts;
@@ -35,23 +38,54 @@ public class UniformReliableBroadcast {
         beb.broadcast(m);
     }
 
-    public void deliver(Message m) throws IOException {
-//        Message received = beb.receive();
-//        if (received == null) return;
-        Set<Integer> mAck = ack.get(m);
-        mAck.add(pid);
-        ack.put(m, mAck);
-        Pair<Integer, Message> pair = new Pair<>(m.getSenderId(), m);
+    // TO DO: resolve this
+    public Message deliver() throws IOException {
+        // Implements upon event <beb, Deliver ...>
+        Message bebDelivered = beb.deliver();
+        if (bebDelivered == null) return null;
+        int senderId = bebDelivered.getSenderId();
+        Set<Integer> bebDeliveredAck = ack.get(bebDelivered);
+        if (bebDeliveredAck == null) {
+            Set<Integer> singleSet = new HashSet<>();
+            singleSet.add(senderId);
+            ack.put(bebDelivered, singleSet);
+        }
+        else {
+            bebDeliveredAck.add(senderId);
+            ack.put(bebDelivered, bebDeliveredAck);
+        }
+
+        Pair<Integer, Message> pair = new Pair<>(senderId, bebDelivered);
         if (!pending.contains(pair)) {
             pending.add(pair);
-            beb.broadcast(m);
+            beb.broadcast(bebDelivered);
         }
+
+        // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
         for (Pair<Integer, Message> pendingPair : pending) {
             Message pendingMsg = pendingPair.second;
-            if (canDeliver(pendingMsg) && !delivered.contains(pendingMsg))
-                delivered.add(pendingMsg);
+            int pendingMsgSeqNum = pendingMsg.getSeqNum();
+            if (canDeliver(pendingMsg) && pendingMsgSeqNum > maxContiguous && !extra.contains(pendingMsgSeqNum)) {
+                // Contiguous message
+                if (pendingMsgSeqNum == maxContiguous + 1) {
+                    // Check if sequence numbers in extra together with received sequence number form a contiguous sequence
+                    int i = 1;
+                    while (extra.contains(pendingMsgSeqNum + i)) {
+                        extra.remove(pendingMsgSeqNum + i);
+                    }
+                    // Minus 1 because the while loop above terminates when it finds first non-contiguous number
+                    maxContiguous = pendingMsgSeqNum + i - 1;
+                }
+                // Non contiguous message
+                else extra.add(pendingMsgSeqNum);
+
+                // Don't think this return is right
+                // Specification implies we should deliver all such messages
+                return pendingMsg;
+            }
         }
-        // Deliver
+        // Not sure about this
+        return null;
     }
 
     private static class Pair<A, B> {

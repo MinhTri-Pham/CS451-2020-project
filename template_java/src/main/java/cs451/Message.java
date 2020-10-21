@@ -9,30 +9,11 @@ public class Message implements Serializable {
     private int senderId;
     private int seqNum;
     private boolean isAck;
-    private int sourcePort;
-    private InetAddress sourceIp;
-    private int destPort;
-    private InetAddress destIp;
 
-
-    public Message(int sendId, int seqNum, boolean isAck, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
+    public Message(int sendId, int seqNum, boolean isAck) {
         this.senderId = sendId;
         this.seqNum = seqNum;
         this.isAck = isAck;
-        this.sourcePort = sourcePort;
-        this.sourceIp = sourceIp;
-        this.destPort = destPort;
-        this.destIp = destIp;
-    }
-
-    public Message(int sendId, int seqNum, int sourcePort, InetAddress sourceIp, int destPort, InetAddress destIp) {
-        this.senderId = sendId;
-        this.seqNum = seqNum;
-        this.isAck = false;
-        this.sourcePort = sourcePort;
-        this.sourceIp = sourceIp;
-        this.destPort = destPort;
-        this.destIp = destIp;
     }
 
     public int getSenderId() {
@@ -47,30 +28,14 @@ public class Message implements Serializable {
         return isAck;
     }
 
-    public int getSourcePort() {
-        return sourcePort;
-    }
-
-    public InetAddress getSourceIp() {
-        return sourceIp;
-    }
-
-    public int getDestPort() {
-        return destPort;
-    }
-
-    public InetAddress getDestIp() {
-        return destIp;
-    }
-
     // Generate ACK message (note that we switch source and destination)
     public Message generateAck(int pid) {
-        return new Message(pid, seqNum, true, destPort, destIp, sourcePort, sourceIp);
+        return new Message(pid, seqNum, true);
     }
 
     // Message with given sequence number
     public Message withSeqNum(int sn) {
-        return new Message(senderId, sn, isAck, destPort, destIp, sourcePort, sourceIp);
+        return new Message(senderId, sn, isAck);
     }
 
     public byte[] toData() throws IOException {
@@ -91,9 +56,10 @@ public class Message implements Serializable {
        }
     }
 
+
     @Override
     public int hashCode() {
-        return Objects.hash(senderId, seqNum, isAck, sourcePort, sourceIp, destPort, destIp);
+        return Objects.hash(senderId, seqNum, isAck);
     }
 
     @Override
@@ -113,10 +79,6 @@ public class Message implements Serializable {
         return "Message(" + msgType
                 + ", sendId: " + senderId
                 + ", seqNum: " + seqNum
-                + ", srcPort: " + sourcePort
-                + ", srcAddr: " + sourceIp
-                + ", destPort: " + destPort
-                + ", destAddr: " + destIp
                 + ")";
     }
 }

@@ -1,28 +1,31 @@
 package cs451.links;
 
+import cs451.Host;
 import cs451.Message;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
 public class StubbornLink {
     private int pid;
+    private Map<Integer, Host> idToHost; //Mapping between pids and hosts (for ACKs)
     private FairLossLink fll; // Channel for sending and receiving
     private Set<Integer> notAcked; // Sequence numbers of sent messages not acknowledged yet
     private int timeout; // Timeout in milliseconds
 
-    public StubbornLink(int pid, int sourcePort, InetAddress sourceIp) {
+    public StubbornLink(int pid, int sourcePort, InetAddress sourceIp, Map<Integer, Host> idToHost) {
         this.pid = pid;
         this.fll = new FairLossLink(sourcePort, sourceIp);
         this.notAcked = new HashSet<>();
         this.timeout = 250;
+        this.idToHost = idToHost;
     }
 
-    public void send(Message message, int destPort, InetAddress destIp) throws IOException {
+    public void send(Message message, Host host) throws IOException {
         int maxNotAcked = 20;
         // Can't send if already have too many unacknowledged messages
         if (notAcked.size() >= maxNotAcked) {
@@ -30,7 +33,7 @@ public class StubbornLink {
             return;
         }
         System.out.println("Sending message " + message);
-        fll.send(message, destPort, destIp);
+        fll.send(message, host);
         int seqNum = message.getSeqNum();
         notAcked.add(seqNum);
         boolean acked = false;
@@ -48,7 +51,7 @@ public class StubbornLink {
                 if (!acked) {
                     timeout *= 2;
                     System.out.println("Haven't received ACK, retransmit");
-                    fll.send(message, destPort, destIp);
+                    fll.send(message, host);
                 }
                 // Message acknowledged so decrease timeout - what is a good value?
                 else timeout -= 100;
@@ -64,7 +67,7 @@ public class StubbornLink {
         if (!received.isAck()) {
             Message ackMessage = received.generateAck(pid);
             System.out.println("Send ACK for message with seqNum " + seqNum);
-            fll.send(ackMessage, received.getSourcePort(), received.getSourceIp());
+            fll.send(ackMessage, idToHost.get(received.getSenderId()));
         }
         // Received ACK
         else if (notAcked.contains(seqNum)) {

@@ -1,13 +1,12 @@
 package cs451;
 
-import cs451.links.FairLossLink;
-import cs451.links.PerfectLink;
-import cs451.links.StubbornLink;
-
 import java.io.IOException;
-import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class Main {
+    private static Process myProcess;
 
     private static void handleSignal() {
         //immediately stop network packet processing
@@ -15,6 +14,7 @@ public class Main {
 
         //write/flush output file if necessary
         System.out.println("Writing output.");
+        myProcess.writeLog();
     }
 
     private static void initSignalHandlers() {
@@ -46,11 +46,29 @@ public class Main {
         System.out.println("Barrier: " + parser.barrierIp() + ":" + parser.barrierPort());
         System.out.println("Signal: " + parser.signalIp() + ":" + parser.signalPort());
         System.out.println("Output: " + parser.output());
+
+        int nbMessagesToBroadcast = 0;
+
         // if config is defined; always check before parser.config()
         if (parser.hasConfig()) {
-            System.out.println("Config: " + parser.config());
+            String configPath = parser.config();
+            System.out.println("Config: " + configPath);
+            try {
+                List<String> configLines =  Files.readAllLines(Paths.get(configPath));
+                nbMessagesToBroadcast =  configLines.size() == 1 ? Integer.parseInt(configLines.get(0)) : 0;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
+        // Find my info among hosts and initialise new Process
+        for (Host host: parser.hosts()) {
+            if (host.getId() == parser.myId()) {
+                myProcess = new Process(parser.myId(), host.getPort(), host.getIp(),
+                        parser.hosts(), nbMessagesToBroadcast, parser.output());
+            }
+        }
 
         Coordinator coordinator = new Coordinator(parser.myId(), parser.barrierIp(), parser.barrierPort(), parser.signalIp(), parser.signalPort());
 
@@ -58,6 +76,7 @@ public class Main {
         coordinator.waitOnBarrier();
 
 	    System.out.println("Broadcasting messages...");
+        myProcess.broadcast();
 
 	    System.out.println("Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();
