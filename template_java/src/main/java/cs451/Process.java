@@ -1,5 +1,6 @@
 package cs451;
 
+import cs451.broadcast.BestEffortBroadcast;
 import cs451.broadcast.FIFOBroadcast;
 
 import java.io.BufferedWriter;
@@ -15,9 +16,10 @@ import java.util.Map;
 public class Process {
     private int pid;
     private int nbMessagesToBroadcast;
-    private FIFOBroadcast fifoBroadcast;
+    private BestEffortBroadcast bestEffortBroadcast;
     private List<String> logs; // Store logs in memory while broadcasting/delivering
     private String output; // Name of output file
+    private boolean delivering = false;
 
     public Process(int pid, int port, String ip, List<Host> hosts, int nbMessagesToBroadcast, String output) {
         this.pid = pid;
@@ -28,7 +30,7 @@ public class Process {
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
         try {
-            this.fifoBroadcast = new FIFOBroadcast(pid, port, InetAddress.getByName(ip), hosts, idToHost);
+            this.bestEffortBroadcast = new BestEffortBroadcast(pid, port, InetAddress.getByName(ip), hosts, idToHost);
             }
         catch (UnknownHostException e) {
             e.printStackTrace();
@@ -36,20 +38,17 @@ public class Process {
     }
 
     public void broadcast() {
+        startDelivering();
         for (int i = 1; i <= nbMessagesToBroadcast; i++) {
             Message broadcastMsg = new Message(pid, i, false);
             try {
-                fifoBroadcast.broadcast(broadcastMsg);
+                bestEffortBroadcast.broadcast(broadcastMsg);
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
             logs.add(String.format("b %d\n",i));
         }
-    }
-
-    public void deliver(Message message) {
-        logs.add(String.format("d %d %d\n", message.getSenderId(), message.getSeqNum()));
     }
 
     public void writeLog() {
@@ -61,5 +60,26 @@ public class Process {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void startDelivering() {
+        delivering = true;
+        Message delivered = null;
+        while(delivering) {
+            try {
+                delivered = bestEffortBroadcast.deliver();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            // Log non-ACK messages
+            if (delivered != null && !delivered.isAck())
+                logs.add(String.format("d %d %d \n", delivered.getSenderId(), delivered.getSeqNum()));
+        }
+    }
+
+    public void stopDelivering() {
+        delivering = false;
+        bestEffortBroadcast.stop();
     }
 }

@@ -31,4 +31,8 @@ public class FairLossLink {
         socket.receive(dpReceive);
         return Message.fromData(dpReceive.getData());
     }
+
+    public void stop() {
+        socket.close();
+    }
 }

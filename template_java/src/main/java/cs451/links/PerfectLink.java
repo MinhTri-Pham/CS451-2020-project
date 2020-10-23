@@ -50,4 +50,8 @@ public class PerfectLink {
         }
     }
 
+    public void stop() {
+        sl.stop();
+    }
+
 }

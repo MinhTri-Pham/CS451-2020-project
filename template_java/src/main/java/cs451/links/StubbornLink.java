@@ -53,8 +53,8 @@ public class StubbornLink {
                     System.out.println("Haven't received ACK, retransmit");
                     fll.send(message, host);
                 }
-                // Message acknowledged so decrease timeout - what is a good value?
-                else timeout -= 100;
+                // Message acknowledged so decrease timeout until some value - what is a good value?
+                else timeout = Math.max(timeout - 100, 250);
             }
         }
     }
@@ -76,5 +76,9 @@ public class StubbornLink {
         }
         else System.out.println("Error: Received ACK to message not sent");
         return received;
+    }
+
+    public void stop() {
+        fll.stop();
     }
 }

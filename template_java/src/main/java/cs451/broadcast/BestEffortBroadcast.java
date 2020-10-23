@@ -28,4 +28,8 @@ public class BestEffortBroadcast {
     public Message deliver() throws IOException {
         return pl.receive();
     }
+
+    public void stop() {
+        pl.stop();
+    }
 }
