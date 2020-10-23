@@ -37,27 +37,26 @@ public class StubbornLink {
         if (!message.isAck()) {
             int seqNum = message.getSeqNum();
             notAcked.add(seqNum);
-            boolean acked = false;
             // Retransmit if ACK not received within timeout
-            if (!message.isAck()) {
-                while(!acked) {
-                    try {
-                        System.out.println("Waiting for ACK");
-                        TimeUnit.MILLISECONDS.sleep(timeout);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
-                    receive();
-                    acked = !notAcked.contains(seqNum);
-                    if (!acked) {
-                        timeout *= 2;
-                        System.out.println("Haven't received ACK, retransmit");
-                        fll.send(message, host);
-                    }
-                    // Message acknowledged so decrease timeout until some value - what is a good value?
-                    else timeout = Math.max(timeout - 100, 250);
-                }
-            }
+            // Not working for me
+//            boolean acked = false;
+//            while(!acked) {
+//                try {
+//                    System.out.println("Waiting for ACK");
+//                    TimeUnit.MILLISECONDS.sleep(timeout);
+//                } catch (InterruptedException ie) {
+//                    Thread.currentThread().interrupt();
+//                }
+//                receive();
+//                acked = !notAcked.contains(seqNum);
+//                if (!acked) {
+//                    timeout *= 2;
+//                    System.out.println("Haven't received ACK, retransmit");
+//                    fll.send(message, host);
+//                }
+//                // Message acknowledged so decrease timeout until some value - what is a good value?
+//                else timeout = Math.max(timeout - 100, 250);
+//            }
         }
     }
 
