@@ -34,39 +34,40 @@ public class StubbornLink {
         }
         System.out.println("Sending message " + message);
         fll.send(message, host);
-        int seqNum = message.getSeqNum();
-        notAcked.add(seqNum);
-        boolean acked = false;
-        // Retransmit if ACK not received within timeout
         if (!message.isAck()) {
-            while(!acked) {
-                try {
-                    System.out.println("Waiting for ACK");
-                    TimeUnit.MILLISECONDS.sleep(timeout);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
+            int seqNum = message.getSeqNum();
+            notAcked.add(seqNum);
+            boolean acked = false;
+            // Retransmit if ACK not received within timeout
+            if (!message.isAck()) {
+                while(!acked) {
+                    try {
+                        System.out.println("Waiting for ACK");
+                        TimeUnit.MILLISECONDS.sleep(timeout);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                    receive();
+                    acked = !notAcked.contains(seqNum);
+                    if (!acked) {
+                        timeout *= 2;
+                        System.out.println("Haven't received ACK, retransmit");
+                        fll.send(message, host);
+                    }
+                    // Message acknowledged so decrease timeout until some value - what is a good value?
+                    else timeout = Math.max(timeout - 100, 250);
                 }
-                receive();
-                acked = !notAcked.contains(seqNum);
-                if (!acked) {
-                    timeout *= 2;
-                    System.out.println("Haven't received ACK, retransmit");
-                    fll.send(message, host);
-                }
-                // Message acknowledged so decrease timeout until some value - what is a good value?
-                else timeout = Math.max(timeout - 100, 250);
             }
         }
     }
 
     public Message receive() throws IOException {
         Message received = fll.receive();
-        System.out.println("Received message " + received);
         int seqNum = received.getSeqNum();
         // Received data, send ACK
         if (!received.isAck()) {
             Message ackMessage = received.generateAck(pid);
-            System.out.println("Send ACK for message with seqNum " + seqNum);
+            System.out.println("Send ACK for message  " + received);
             fll.send(ackMessage, idToHost.get(received.getSenderId()));
         }
         // Received ACK
