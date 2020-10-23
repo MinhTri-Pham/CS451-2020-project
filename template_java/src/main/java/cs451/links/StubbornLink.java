@@ -21,7 +21,7 @@ public class StubbornLink {
         this.pid = pid;
         this.fll = new FairLossLink(sourcePort, sourceIp);
         this.notAcked = new HashSet<>();
-        this.timeout = 250;
+        this.timeout = 5000;
         this.idToHost = idToHost;
     }
 
