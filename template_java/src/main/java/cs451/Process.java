@@ -1,7 +1,6 @@
 package cs451;
 
 import cs451.broadcast.BestEffortBroadcast;
-import cs451.broadcast.FIFOBroadcast;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -16,16 +15,17 @@ import java.util.Map;
 public class Process {
     private int pid;
     private int nbMessagesToBroadcast;
+    private int numHosts;
     private BestEffortBroadcast bestEffortBroadcast;
     private List<String> logs; // Store logs in memory while broadcasting/delivering
     private String output; // Name of output file
-    private boolean delivering = false;
 
     public Process(int pid, int port, String ip, List<Host> hosts, int nbMessagesToBroadcast, String output) {
         this.pid = pid;
         this.nbMessagesToBroadcast = nbMessagesToBroadcast;
-        this.output = output;
+        this.numHosts = hosts.size();
         this.logs = new ArrayList<>();
+        this.output = output;
 
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
@@ -37,8 +37,7 @@ public class Process {
         }
     }
 
-    public void broadcast() {
-        startDelivering();
+    public void broadcastAndDeliver() {
         for (int i = 1; i <= nbMessagesToBroadcast; i++) {
             Message broadcastMsg = new Message(pid, i, false);
             try {
@@ -48,7 +47,24 @@ public class Process {
                 e.printStackTrace();
             }
             logs.add(String.format("b %d\n",i));
+
+            // Really bad - just to test basics work
+            for (int j = 0; j < 3; j++) {
+                Message delivered = null;
+                try {
+                    delivered = bestEffortBroadcast.deliver();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (delivered != null && !delivered.isAck()) {
+                    logs.add(String.format("d %d %d \n",delivered.getSenderId(), delivered.getSeqNum()));
+                }
+            }
         }
+
+        bestEffortBroadcast.stop();
+
     }
 
     public void writeLog() {
@@ -60,26 +76,5 @@ public class Process {
         catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void startDelivering() {
-        delivering = true;
-        Message delivered = null;
-        while(delivering) {
-            try {
-                delivered = bestEffortBroadcast.deliver();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-            // Log non-ACK messages
-            if (delivered != null && !delivered.isAck())
-                logs.add(String.format("d %d %d \n", delivered.getSenderId(), delivered.getSeqNum()));
-        }
-    }
-
-    public void stopDelivering() {
-        delivering = false;
-        bestEffortBroadcast.stop();
     }
 }
