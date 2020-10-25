@@ -15,11 +15,11 @@ public class PerfectLink implements DeliverInterface {
     private Set<Integer> extra = ConcurrentHashMap.newKeySet(); // Set of sequence numbers bigger than maxContiguous + 1  of received messages
     // Maximum sequence number n such that all messages 1,...,n have been received
     private int maxContiguous = 0; // Maximum sequence number n such that all messages 1,...,n have been received
-    private DeliverInterface deliverInterface;
+//    private DeliverInterface deliverInterface;
 
     public PerfectLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.sl = new StubbornLink(pid, sourcePort, idToHost, deliverInterface);
-        this.deliverInterface = deliverInterface;
+//        this.deliverInterface = deliverInterface;
     }
 
     public void send(Message message, Host host) {
@@ -45,7 +45,8 @@ public class PerfectLink implements DeliverInterface {
             }
             // Non contiguous message
             else extra.add(receivedSeqNum);
-            deliverInterface.deliver(message);
+//            deliverInterface.deliver(message);
+            sl.deliver(message);
         }
         else {
             System.out.println("Already received this");
