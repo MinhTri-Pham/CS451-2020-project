@@ -21,7 +21,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
     public UniformReliableBroadcast(int pid, int sourcePort, List<Host> hosts,
                                     Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
-        this.beb = new BestEffortBroadcast(pid, sourcePort, hosts, idToHost, deliverInterface);
+        this.beb = new BestEffortBroadcast(pid, sourcePort, hosts, idToHost, this);
         this.extra = new HashSet<>();
         this.maxContiguous = 0;
         this.hosts = hosts;

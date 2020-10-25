@@ -12,11 +12,13 @@ public class BestEffortBroadcast implements DeliverInterface {
 
     private PerfectLink pl;
     private List<Host> hosts;
+    private DeliverInterface deliverInterface;
 
     public BestEffortBroadcast(int pid, int sourcePort, List<Host> hosts,
                                Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.hosts = hosts;
-        this.pl = new PerfectLink(pid, sourcePort, idToHost, deliverInterface);
+        this.deliverInterface = deliverInterface;
+        this.pl = new PerfectLink(pid, sourcePort, idToHost, this);
     }
 
     public void broadcast(Message message) {
@@ -27,7 +29,7 @@ public class BestEffortBroadcast implements DeliverInterface {
 
     @Override
     public void deliver(Message message) {
-        pl.deliver(message);
+        deliverInterface.deliver(message);
     }
 
     //    public Message deliver() throws IOException {

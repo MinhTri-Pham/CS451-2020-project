@@ -21,7 +21,7 @@ public class FairLossLink implements DeliverInterface {
         try {
             socket = new DatagramSocket();
             this.deliverInterface = deliverInterface;
-            this.receiver = new Receiver(sourcePort, deliverInterface);
+            this.receiver = new Receiver(sourcePort, this);
             receiver.start();
         } catch (SocketException e) {
             e.printStackTrace();

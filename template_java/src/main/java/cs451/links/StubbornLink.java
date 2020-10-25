@@ -14,14 +14,14 @@ public class StubbornLink implements DeliverInterface {
     private Map<Integer, Host> idToHost; //Mapping between pids and hosts (for ACKs)
     private FairLossLink fll; // Channel for sending and receiving
     private Set<Integer> notAcked = ConcurrentHashMap.newKeySet(); // Sequence numbers of sent messages not acknowledged yet
-//    private DeliverInterface deliverInterface;
+    private DeliverInterface deliverInterface;
 //    private int timeout = 1000; // Timeout in milliseconds
 
     public StubbornLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
-        this.fll = new FairLossLink(sourcePort, deliverInterface);
+        this.fll = new FairLossLink(sourcePort, this);
         this.idToHost = idToHost;
-//        this.deliverInterface = deliverInterface;
+        this.deliverInterface = deliverInterface;
     }
 
     public void send(Message message, Host host){
@@ -59,14 +59,14 @@ public class StubbornLink implements DeliverInterface {
 
     @Override
     public void deliver(Message message) {
+        System.out.println(String.format("Received message %s from host %d", message, message.getSenderId()));
         int seqNum = message.getSeqNum();
         // Received data, send ACK
         if (!message.isAck()) {
             Message ackMessage = message.generateAck(pid);
             System.out.println(String.format("Sending ACK message %s to host %d", message, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
-//            deliverInterface.deliver(message);
-            fll.deliver(message);
+            deliverInterface.deliver(message);
         }
         // Received ACK
         else if (notAcked.contains(seqNum)) {
