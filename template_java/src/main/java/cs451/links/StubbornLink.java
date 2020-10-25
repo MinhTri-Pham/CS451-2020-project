@@ -1,53 +1,50 @@
 package cs451.links;
 
+import cs451.DeliverInterface;
 import cs451.Host;
 import cs451.Message;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
+//import java.util.concurrent.TimeUnit;
 
-public class StubbornLink {
+public class StubbornLink implements DeliverInterface {
     private int pid;
     private Map<Integer, Host> idToHost; //Mapping between pids and hosts (for ACKs)
     private FairLossLink fll; // Channel for sending and receiving
-    private Set<Integer> notAcked; // Sequence numbers of sent messages not acknowledged yet
-    private int timeout; // Timeout in milliseconds
+    private Set<Integer> notAcked = ConcurrentHashMap.newKeySet(); // Sequence numbers of sent messages not acknowledged yet
+    private DeliverInterface deliverInterface;
+    private int timeout = 1000; // Timeout in milliseconds
 
-    public StubbornLink(int pid, int sourcePort, InetAddress sourceIp, Map<Integer, Host> idToHost) {
+    public StubbornLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
-        this.fll = new FairLossLink(sourcePort, sourceIp);
-        this.notAcked = new HashSet<>();
-        this.timeout = 5000;
+        this.fll = new FairLossLink(sourcePort, deliverInterface);
         this.idToHost = idToHost;
+        this.deliverInterface = deliverInterface;
     }
 
-    public void send(Message message, Host host) throws IOException {
+    public void send(Message message, Host host){
         int maxNotAcked = 20;
         // Can't send if already have too many unacknowledged messages
         if (notAcked.size() >= maxNotAcked) {
             System.out.println("Too many unacknowledged messages, can't send");
             return;
         }
-        System.out.println("Sending message " + message);
+        System.out.println(String.format("Sending message %s to host %d", message, host.getId()));
         fll.send(message, host);
-        if (!message.isAck()) {
-            int seqNum = message.getSeqNum();
-            notAcked.add(seqNum);
-            // Retransmit if ACK not received within timeout
-            // Not working for me
+//        if (!message.isAck()) {
+//            int seqNum = message.getSeqNum();
+//            notAcked.add(seqNum);
+//            // Retransmit if ACK not received within timeout
 //            boolean acked = false;
 //            while(!acked) {
+//                System.out.println("Waiting for ACK");
 //                try {
-//                    System.out.println("Waiting for ACK");
 //                    TimeUnit.MILLISECONDS.sleep(timeout);
 //                } catch (InterruptedException ie) {
 //                    Thread.currentThread().interrupt();
 //                }
-//                receive();
 //                acked = !notAcked.contains(seqNum);
 //                if (!acked) {
 //                    timeout *= 2;
@@ -57,17 +54,18 @@ public class StubbornLink {
 //                // Message acknowledged so decrease timeout until some value - what is a good value?
 //                else timeout = Math.max(timeout - 100, 250);
 //            }
-        }
+//        }
     }
 
-    public Message receive() throws IOException {
-        Message received = fll.receive();
-        int seqNum = received.getSeqNum();
+    @Override
+    public void deliver(Message message) {
+        int seqNum = message.getSeqNum();
         // Received data, send ACK
-        if (!received.isAck()) {
-            Message ackMessage = received.generateAck(pid);
-            System.out.println("Send ACK for message  " + received);
-            fll.send(ackMessage, idToHost.get(received.getSenderId()));
+        if (!message.isAck()) {
+            Message ackMessage = message.generateAck(pid);
+            System.out.println(String.format("Sending ACK message %s to host %d", message, message.getSenderId()));
+            fll.send(ackMessage, idToHost.get(message.getSenderId()));
+            deliverInterface.deliver(message);
         }
         // Received ACK
         else if (notAcked.contains(seqNum)) {
@@ -75,10 +73,27 @@ public class StubbornLink {
             notAcked.remove(seqNum);
         }
         else System.out.println("Error: Received ACK to message not sent");
-        return received;
     }
 
-    public void stop() {
-        fll.stop();
+    //    public Message receive() throws IOException {
+//        Message received = fll.receive();
+//        int seqNum = received.getSeqNum();
+//        // Received data, send ACK
+//        if (!received.isAck()) {
+//            Message ackMessage = received.generateAck(pid);
+//            System.out.println(String.format("Sending ACK message %s to host %d", received, received.getSenderId()));
+//            fll.send(ackMessage, idToHost.get(received.getSenderId()));
+//        }
+//        // Received ACK
+//        else if (notAcked.contains(seqNum)) {
+//            System.out.println("Received ACK for message with seqNum " + seqNum);
+//            notAcked.remove(seqNum);
+//        }
+//        else System.out.println("Error: Received ACK to message not sent");
+//        return received;
+//    }
+
+    public void close() {
+        fll.close();
     }
 }

@@ -1,36 +1,50 @@
 package cs451.broadcast;
 
+import cs451.DeliverInterface;
 import cs451.Host;
 import cs451.Message;
 
-import java.io.IOException;
-import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class FIFOBroadcast {
     private UniformReliableBroadcast urb;
-    private int lsn;
-    private Set<Message> pending;
-    private int[] next;
+    private AtomicInteger lsn = new AtomicInteger(1);
+    private Set<Message> pending = ConcurrentHashMap.newKeySet();;
+    private AtomicIntegerArray next;
+    private DeliverInterface deliverInterface;
 
-    public FIFOBroadcast(int pid, int sourcePort, InetAddress sourceIp, List<Host> hosts, Map<Integer, Host> idToHost) {
+    public FIFOBroadcast(int pid, int sourcePort, List<Host> hosts,
+                         Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         // Implements Broadcast with Sequence Number algorithm
-        this.urb = new UniformReliableBroadcast(pid, sourcePort, sourceIp, hosts, idToHost);
-        this.lsn = 1;
-        this.pending = new HashSet<>();
-        this.next = new int[hosts.size()];
-        Arrays.fill(next,1);
+        this.urb = new UniformReliableBroadcast(pid, sourcePort, hosts, idToHost, deliverInterface);
+        this.deliverInterface = deliverInterface;
+        int[] temp = new int[hosts.size()];
+        Arrays.fill(temp,0);
+        this.next = new AtomicIntegerArray(temp);
     }
 
-    public void broadcast(Message m) throws IOException {
-        lsn++;
-        urb.broadcast(m.withSeqNum(lsn));
+    public void broadcast(Message message){
+        urb.broadcast(message.withSeqNum(lsn.incrementAndGet()));
     }
 
-    public Message deliver() throws IOException {
-        Message urbDelivered = urb.deliver();
-        if (urbDelivered == null) return null;
-        pending.add(urbDelivered);
+    public void deliver(Message message) {
+        pending.add(message);
+        for (Message pendingMsg : pending) {
+            if (next.get(pendingMsg.getSenderId()) == pendingMsg.getSeqNum()) {
+                next.incrementAndGet(pendingMsg.getSenderId());
+                pending.remove(pendingMsg);
+                deliverInterface.deliver(pendingMsg);
+            }
+        }
+    }
+
+//    public Message deliver() throws IOException {
+//        Message urbDelivered = urb.deliver();
+//        if (urbDelivered == null) return null;
+//        pending.add(urbDelivered);
 //        for (Message pendingMsg : pending) {
 //            if (next[pendingMsg.getSenderId()] == pendingMsg.getSeqNum()) {
 //                next[pendingMsg.getSenderId()]++;
@@ -40,17 +54,17 @@ public class FIFOBroadcast {
 //                return pendingMsg;
 //            }
 //        }
-        // Don't need pending contains check?
-        if (pending.contains(urbDelivered) &&  next[urbDelivered.getSenderId()] == urbDelivered.getSeqNum()) {
-            next[urbDelivered.getSenderId()]++;
-            pending.remove(urbDelivered);
-            return urbDelivered;
-        }
-        // Not sure about this
-        return null;
-    }
+//        // Don't need pending contains check?
+//        if (pending.contains(urbDelivered) &&  next[urbDelivered.getSenderId()] == urbDelivered.getSeqNum()) {
+//            next[urbDelivered.getSenderId()]++;
+//            pending.remove(urbDelivered);
+//            return urbDelivered;
+//        }
+//        // Not sure about this
+//        return null;
+//    }
 
-    public void stop() {
-        urb.stop();
+    public void close() {
+        urb.close();
     }
 }

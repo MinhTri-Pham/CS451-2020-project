@@ -11,6 +11,7 @@ public class Main {
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
+        myProcess.close();
 
         //write/flush output file if necessary
         System.out.println("Writing output.");
@@ -65,7 +66,8 @@ public class Main {
         // Find my info among hosts and initialise new Process
         for (Host host: parser.hosts()) {
             if (host.getId() == parser.myId()) {
-                myProcess = new Process(parser.myId(), host.getPort(), host.getIp(),
+
+                myProcess = new Process(parser.myId(), host.getPort(),
                         parser.hosts(), nbMessagesToBroadcast, parser.output());
                 break;
             }
@@ -77,7 +79,7 @@ public class Main {
         coordinator.waitOnBarrier();
 
 	    System.out.println("Broadcasting messages...");
-        myProcess.broadcastAndDeliver();
+        myProcess.broadcast();
 
 	    System.out.println("Signaling end of broadcasting messages");
         coordinator.finishedBroadcasting();

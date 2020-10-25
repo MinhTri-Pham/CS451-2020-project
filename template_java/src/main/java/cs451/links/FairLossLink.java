@@ -1,38 +1,57 @@
 package cs451.links;
 
+import cs451.DeliverInterface;
 import cs451.Host;
 import cs451.Message;
+import cs451.Receiver;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
-public class FairLossLink {
+public class FairLossLink implements DeliverInterface {
 
     private DatagramSocket socket;
+    private Receiver receiver;
+    private DeliverInterface deliverInterface;
 
-    public FairLossLink(int sourcePort, InetAddress sourceIp) {
+    public FairLossLink(int sourcePort, DeliverInterface deliverInterface) {
         try {
-            socket = new DatagramSocket(sourcePort, sourceIp);
-        } catch (Exception e) {
+            socket = new DatagramSocket();
+            this.deliverInterface = deliverInterface;
+            this.receiver = new Receiver(sourcePort, deliverInterface);
+            receiver.start();
+        } catch (SocketException e) {
             e.printStackTrace();
         }
     }
 
-    public void send(Message message, Host host) throws IOException {
-        byte[] buf = message.toData();
-        DatagramPacket dpSend = new DatagramPacket(buf, buf.length, InetAddress.getByName(host.getIp()), host.getPort());
-        socket.send(dpSend);
+    public void send(Message message, Host host) {
+        try {
+            byte[] buf = message.toData();
+            DatagramPacket dpSend = new DatagramPacket(buf, buf.length, InetAddress.getByName(host.getIp()), host.getPort());
+            socket.send(dpSend);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public Message receive() throws IOException {
-        byte[] rec = new byte[1024];
-        DatagramPacket dpReceive = new DatagramPacket(rec, rec.length);
-        socket.receive(dpReceive);
-        return Message.fromData(dpReceive.getData());
+    @Override
+    public void deliver(Message message) {
+        deliverInterface.deliver(message);
     }
 
-    public void stop() {
-        socket.close();
+//    public Message receive() throws IOException {
+//        byte[] rec = new byte[1024];
+//        DatagramPacket dpReceive = new DatagramPacket(rec, rec.length);
+//        socket.receive(dpReceive);
+//        return Message.fromData(dpReceive.getData());
+//    }
+
+    public void close() {
+        receiver.close();
     }
+
 }

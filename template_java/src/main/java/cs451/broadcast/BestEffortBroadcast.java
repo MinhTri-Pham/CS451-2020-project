@@ -1,35 +1,40 @@
 package cs451.broadcast;
 
+import cs451.DeliverInterface;
 import cs451.Message;
 import cs451.links.*;
 import cs451.Host;
 
-import java.io.IOException;
-import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 
-public class BestEffortBroadcast {
+public class BestEffortBroadcast implements DeliverInterface {
 
     private PerfectLink pl;
     private List<Host> hosts;
 
-    public BestEffortBroadcast(int pid, int sourcePort, InetAddress sourceIp,List<Host> hosts, Map<Integer, Host> idToHost) {
+    public BestEffortBroadcast(int pid, int sourcePort, List<Host> hosts,
+                               Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.hosts = hosts;
-        pl = new PerfectLink(pid, sourcePort, sourceIp, idToHost);
+        this.pl = new PerfectLink(pid, sourcePort, idToHost, deliverInterface);
     }
 
-    public void broadcast(Message message) throws IOException {
+    public void broadcast(Message message) {
         for (Host host : hosts) {
             pl.send(message, host);
         }
     }
 
-    public Message deliver() throws IOException {
-        return pl.receive();
+    @Override
+    public void deliver(Message message) {
+        pl.deliver(message);
     }
 
-    public void stop() {
-        pl.stop();
+    //    public Message deliver() throws IOException {
+//        return pl.receive();
+//    }
+
+    public void close() {
+        pl.close();
     }
 }
