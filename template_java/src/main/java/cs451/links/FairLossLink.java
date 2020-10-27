@@ -43,7 +43,6 @@ public class FairLossLink implements DeliverInterface {
         deliverInterface.deliver(message);
     }
 
-
     public void close() {
         receiver.close();
     }

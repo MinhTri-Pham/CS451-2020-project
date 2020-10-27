@@ -42,21 +42,21 @@ public class StubbornLink implements DeliverInterface {
             int seqNum = message.getSeqNum();
             notAcked.add(seqNum);
             // Retransmit if ACK not received within timeout
-            while(notAcked.contains(seqNum)) {
-                System.out.println("Waiting for ACK");
-                try {
-                    TimeUnit.MILLISECONDS.sleep(timeout);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-                if (notAcked.contains(seqNum)) {
-                    timeout *= 2;
-                    System.out.println("Haven't received ACK, double timeout and retransmit");
-                    fll.send(message, host);
-                }
-                // Message acknowledged so decrease timeout until some value - increase by what?
-                else timeout = Math.max(timeout - 100, 250);
-            }
+//            while(notAcked.contains(seqNum)) {
+//                System.out.println("Waiting for ACK");
+//                try {
+//                    TimeUnit.MILLISECONDS.sleep(timeout);
+//                } catch (InterruptedException ie) {
+//                    Thread.currentThread().interrupt();
+//                }
+//                if (notAcked.contains(seqNum)) {
+//                    timeout *= 2;
+//                    System.out.println("Haven't received ACK, double timeout and retransmit");
+//                    fll.send(message, host);
+//                }
+//                // Message acknowledged so decrease timeout until some value - increase by what?
+//                else timeout = Math.max(timeout - 100, 250);
+//            }
         }
     }
 
