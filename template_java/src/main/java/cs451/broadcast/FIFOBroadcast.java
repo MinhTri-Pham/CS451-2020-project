@@ -40,29 +40,6 @@ public class FIFOBroadcast implements DeliverInterface{
         }
     }
 
-//    public Message deliver() throws IOException {
-//        Message urbDelivered = urb.deliver();
-//        if (urbDelivered == null) return null;
-//        pending.add(urbDelivered);
-//        for (Message pendingMsg : pending) {
-//            if (next[pendingMsg.getSenderId()] == pendingMsg.getSeqNum()) {
-//                next[pendingMsg.getSenderId()]++;
-//                pending.remove(pendingMsg);
-//                // Don't think this return is right
-//                // Specification implies we should deliver all such messages
-//                return pendingMsg;
-//            }
-//        }
-//        // Don't need pending contains check?
-//        if (pending.contains(urbDelivered) &&  next[urbDelivered.getSenderId()] == urbDelivered.getSeqNum()) {
-//            next[urbDelivered.getSenderId()]++;
-//            pending.remove(urbDelivered);
-//            return urbDelivered;
-//        }
-//        // Not sure about this
-//        return null;
-//    }
-
     public void close() {
         urb.close();
     }

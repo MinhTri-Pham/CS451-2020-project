@@ -43,12 +43,6 @@ public class FairLossLink implements DeliverInterface {
         deliverInterface.deliver(message);
     }
 
-//    public Message receive() throws IOException {
-//        byte[] rec = new byte[1024];
-//        DatagramPacket dpReceive = new DatagramPacket(rec, rec.length);
-//        socket.receive(dpReceive);
-//        return Message.fromData(dpReceive.getData());
-//    }
 
     public void close() {
         receiver.close();

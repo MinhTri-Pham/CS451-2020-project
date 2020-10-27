@@ -11,10 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PerfectLink implements DeliverInterface {
 
     private StubbornLink sl; // Underlying channel
-    // Compressed representation of delivered set
-    private Set<Integer> extra = ConcurrentHashMap.newKeySet(); // Set of sequence numbers bigger than maxContiguous + 1  of received messages
-    // Maximum sequence number n such that all messages 1,...,n have been received
-    private int maxContiguous = 0; // Maximum sequence number n such that all messages 1,...,n have been received
+    Set<Message> delivered = ConcurrentHashMap.newKeySet();
+    // To compress representation of delivered set,
+    // for each sender, store sequence number sn such that messages with sequence number 1,..., sn have been delivered
+    Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
     private DeliverInterface deliverInterface;
 
     public PerfectLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
@@ -26,56 +26,37 @@ public class PerfectLink implements DeliverInterface {
         sl.send(message,host);
     }
 
-    //TO DO: concurrent access of global variables
     @Override
     public void deliver(Message message) {
-        int receivedSeqNum = message.getSeqNum();
+        int msgSenderId = message.getSenderId();
+        int msgSeqNum = message.getSeqNum();
 
-        // Check if we have to update data structures for received messages
-        if (receivedSeqNum > maxContiguous && !extra.contains(receivedSeqNum)) {
-            if (receivedSeqNum == maxContiguous + 1) {
-                // Received contiguous message
-                int i = 1;
-                // Check if we have a new a contiguous sequence
-                while (extra.contains(receivedSeqNum + i)) {
-                    extra.remove(receivedSeqNum + i);
-                }
-                // Minus 1 because the while loop above terminates when it finds first non-contiguous number
-                maxContiguous = receivedSeqNum + i - 1;
-            }
-            // Non contiguous message
-            else extra.add(receivedSeqNum);
-            deliverInterface.deliver(message);
+        // Received a duplicate message
+        if (delivered.contains(message) || maxContiguous.get(msgSenderId) <= msgSeqNum) {
+            System.out.println("Received duplicate message " + message);
         }
         else {
-            System.out.println("Already received this");
+            // Received a contiguous message, update maxContiguous and delivered
+            if (msgSeqNum == maxContiguous.get(msgSenderId) + 1) {
+                int i = 1;
+                Message temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
+                // Check if we have a new a contiguous sequence
+                while (delivered.contains(temp)) {
+                    delivered.remove(temp);
+                    i++;
+                    temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
+                }
+                // No +1 because the while loop above terminates when it finds first non-contiguous number
+                maxContiguous.put(msgSenderId, msgSeqNum + i);
+            }
+            // Received a contiguous message, update delivered
+            else {
+                delivered.add(message);
+            }
+            // Deliver the message (regardless of whether it's contiguous or not)
+            deliverInterface.deliver(message);
         }
     }
-
-    //    public Message receive() throws IOException {
-//        Message received = sl.receive();
-//        int receivedSeqNum = received.getSeqNum();
-//        // Check if we have to update data structures for received messages
-//        if (receivedSeqNum > maxContiguous && !extra.contains(receivedSeqNum)) {
-//            if (receivedSeqNum == maxContiguous + 1) {
-//                // Received contiguous message
-//                int i = 1;
-//                // Check if sequence numbers in extra together with received sequence number form a contiguous sequence
-//                while (extra.contains(receivedSeqNum + i)) {
-//                    extra.remove(receivedSeqNum + i);
-//                }
-//                // Minus 1 because the while loop above terminates when it finds first non-contiguous number
-//                maxContiguous = receivedSeqNum + i - 1;
-//            }
-//            // Non contiguous message
-//            else extra.add(receivedSeqNum);
-//            return received;
-//        }
-//        else {
-//            System.out.println("Already received this");
-//            return null;
-//        }
-//    }
 
     public void close () {
         sl.close();

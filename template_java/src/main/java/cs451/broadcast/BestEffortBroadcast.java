@@ -32,10 +32,6 @@ public class BestEffortBroadcast implements DeliverInterface {
         deliverInterface.deliver(message);
     }
 
-    //    public Message deliver() throws IOException {
-//        return pl.receive();
-//    }
-
     public void close() {
         pl.close();
     }

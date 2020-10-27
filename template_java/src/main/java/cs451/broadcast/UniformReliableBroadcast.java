@@ -11,9 +11,10 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
     // Implements Majority ACK algorithm
     private BestEffortBroadcast beb;
-//    private Set<Message> delivered;
-    private Set<Integer> extra; // Set of sequence numbers bigger than maxContiguous + 1  of received messages
-    private int maxContiguous; // Maximum sequence number n such that all messages 1,...,n have been delivered
+    Set<Message> delivered = ConcurrentHashMap.newKeySet();
+    // To compress representation of delivered set,
+    // for each sender, store sequence number sn such that messages with sequence number 1,..., sn have been delivered
+    Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
     private Set<Message> pending = ConcurrentHashMap.newKeySet();
     private ConcurrentHashMap<Message, Set<Integer>> ack = new ConcurrentHashMap<>();
     private List<Host> hosts;
@@ -22,8 +23,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
     public UniformReliableBroadcast(int pid, int sourcePort, List<Host> hosts,
                                     Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.beb = new BestEffortBroadcast(pid, sourcePort, hosts, idToHost, this);
-        this.extra = new HashSet<>();
-        this.maxContiguous = 0;
         this.hosts = hosts;
         this.deliverInterface = deliverInterface;
     }
@@ -37,14 +36,13 @@ public class UniformReliableBroadcast implements DeliverInterface {
         beb.broadcast(m);
     }
 
-    //TO DO: concurrent access of global variables
     @ Override
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
         int meesageSendId = message.getSenderId();
         Set<Integer> bebDeliveredAck = ack.get(message);
         if (bebDeliveredAck == null) {
-            Set<Integer> singleSet = new HashSet<>();
+            Set<Integer> singleSet = ConcurrentHashMap.newKeySet();
             singleSet.add(meesageSendId);
             ack.put(message, singleSet);
         }
@@ -61,70 +59,30 @@ public class UniformReliableBroadcast implements DeliverInterface {
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
         for (Message pendingMsg : pending) {
             int pendingMsgSeqNum = pendingMsg.getSeqNum();
-            if (canDeliver(pendingMsg) && pendingMsgSeqNum > maxContiguous && !extra.contains(pendingMsgSeqNum)) {
-                if (pendingMsgSeqNum == maxContiguous + 1) {
-                    // Received contiguous message
+            int pendingMsgSenderId = pendingMsg.getSenderId();
+            if (canDeliver(pendingMsg) && pendingMsgSeqNum > maxContiguous.get(pendingMsgSenderId)
+                    && !delivered.contains(pendingMsg)) {
+                // Add pendingMsg to delivered set
+                if (pendingMsgSeqNum == maxContiguous.get(pendingMsg.getSenderId() + 1)) {
+                    // Contiguous message
                     int i = 1;
+                    Message temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + 1 + i, false);
                     // Check if we have a new a contiguous sequence
-                    while (extra.contains(pendingMsgSeqNum + i)) {
-                        extra.remove(pendingMsgSeqNum + i);
+                    while (delivered.contains(temp)) {
+                        delivered.remove(temp);
+                        i++;
+                        temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + 1 + i, false);
                     }
-                    // Minus 1 because the while loop above terminates when it finds first non-contiguous number
-                    maxContiguous = pendingMsgSeqNum + i - 1;
+                    // No +1 because the while loop above terminates when it finds first non-contiguous number
+                    maxContiguous.put(pendingMsgSenderId, pendingMsgSeqNum + i);
                 }
-                // Non contiguous message
-                else extra.add(pendingMsgSeqNum);
+                // Non-contiguous message
+                else delivered.add(pendingMsg);
                 deliverInterface.deliver(pendingMsg);
                 pending.remove(pendingMsg); // Garbage clean pending
             }
         }
-
     }
-
-//    public Message deliver() throws IOException {
-//        // Implements upon event <beb, Deliver ...>
-//        Message bebDelivered = beb.deliver();
-//        if (bebDelivered == null) return null;
-//        int bebDeliveredSenderId = bebDelivered.getSenderId();
-//        Set<Integer> bebDeliveredAck = ack.get(bebDelivered);
-//        if (bebDeliveredAck == null) {
-//            Set<Integer> singleSet = new HashSet<>();
-//            singleSet.add(bebDeliveredSenderId);
-//            ack.put(bebDelivered, singleSet);
-//        }
-//        else {
-//            bebDeliveredAck.add(bebDeliveredSenderId);
-//            ack.put(bebDelivered, bebDeliveredAck);
-//        }
-//
-//        if (!pending.contains(bebDelivered)) {
-//            pending.add(bebDelivered);
-//            beb.broadcast(bebDelivered);
-//        }
-//
-//        // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
-//        int bebDeliveredSeqNum = bebDelivered.getSeqNum();
-//        // Don't need pending contains check?
-//        if (pending.contains(bebDelivered) && canDeliver(bebDelivered) &&
-//                bebDeliveredSeqNum > maxContiguous && !extra.contains(bebDeliveredSeqNum)) {
-//            // Update representation of delivered set
-//            if (bebDeliveredSeqNum == maxContiguous + 1) {
-//                // Check if sequence numbers in extra together with received sequence number form a contiguous sequence
-//                int i = 1;
-//                while (extra.contains(bebDeliveredSeqNum + i)) {
-//                    extra.remove(bebDeliveredSeqNum + i);
-//                }
-//                // Minus 1 because the while loop above terminates when it finds first non-contiguous number
-//                maxContiguous = bebDeliveredSeqNum + i - 1;
-//            }
-//            // Non contiguous message
-//            else extra.add(bebDeliveredSeqNum);
-//            return bebDelivered;
-//        }
-//
-//        // Not sure about this
-//        return null;
-//    }
 
     public void close() {
         beb.close();
