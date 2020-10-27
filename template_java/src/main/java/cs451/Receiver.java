@@ -30,6 +30,7 @@ public class Receiver extends Thread{
                 DatagramPacket dpReceive = new DatagramPacket(recBuffer, recBuffer.length);
                 socket.receive(dpReceive);
                 Message message = Message.fromData(dpReceive.getData());
+                System.out.println("Receiver detected message  " + message);
                 deliverInterface.deliver(message);
             } catch (IOException e) {
                 e.printStackTrace();

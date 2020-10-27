@@ -38,6 +38,7 @@ public class StubbornLink implements DeliverInterface {
             while (notAcked.size() >= maxNotAcked) {
                 System.out.println("Too many unacknowledged messages, can't send");
             }
+            System.out.println(String.format("Sending message %s to host %d", message, host.getId()));
             fll.send(message, host);
             int seqNum = message.getSeqNum();
             notAcked.add(seqNum);
@@ -64,11 +65,12 @@ public class StubbornLink implements DeliverInterface {
     public void deliver(Message message) {
         System.out.println(String.format("Received message %s from host %d", message, message.getSenderId()));
         int seqNum = message.getSeqNum();
-        // Received data, send ACK
+        // Received DATA, send ACK
         if (!message.isAck()) {
             Message ackMessage = message.generateAck(pid);
-            System.out.println(String.format("Sending ACK message %s to host %d", message, message.getSenderId()));
+            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
+            System.out.println("Sent the ACK");
             deliverInterface.deliver(message);
         }
         // Received ACK
