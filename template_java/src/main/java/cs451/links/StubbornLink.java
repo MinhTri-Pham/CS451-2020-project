@@ -5,15 +5,18 @@ import cs451.Host;
 import cs451.Message;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+//import java.util.concurrent.TimeUnit;
 
 public class StubbornLink implements DeliverInterface {
-    private int pid;
-    private Map<Integer, Host> idToHost; //Mapping between pids and hosts (for ACKs)
+    private int pid; // Pid of process
+    private Map<Integer, Host> idToHost; // Mapping between pids and hosts (for ACKs)
     private FairLossLink fll; // Channel for sending and receiving
-    private Set<Integer> notAcked = ConcurrentHashMap.newKeySet(); // Sequence numbers of sent messages not acknowledged yet
+    // Messages sent but not acknowledged
+    // The tuple stores the process id and the message sequence number from resp. for which ACK is expected
+    private Set<Tuple<Integer, Integer>> notAcked = ConcurrentHashMap.newKeySet();
     private DeliverInterface deliverInterface;
     private int timeout = 1000; // Timeout in milliseconds -2
 
@@ -25,7 +28,7 @@ public class StubbornLink implements DeliverInterface {
     }
 
     public void send(Message message, Host host){
-        if (!message.isAck()) {
+        if (message.isAck()) {
             // ACKs be sent immediately
             System.out.println(String.format("Sending message %s to host %d", message, host.getId()));
             fll.send(message, host);
@@ -40,9 +43,11 @@ public class StubbornLink implements DeliverInterface {
             }
             System.out.println(String.format("Sending message %s to host %d", message, host.getId()));
             fll.send(message, host);
-            int seqNum = message.getSeqNum();
-            notAcked.add(seqNum);
+            Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
+            notAcked.add(toAck);
+            System.out.println("Added  " + toAck + " to nonAcked");
             // Retransmit if ACK not received within timeout
+//            int seqNum = message.getSeqNum();
 //            while(notAcked.contains(seqNum)) {
 //                System.out.println("Waiting for ACK");
 //                try {
@@ -64,23 +69,58 @@ public class StubbornLink implements DeliverInterface {
     @Override
     public void deliver(Message message) {
         int seqNum = message.getSeqNum();
-        // Received DATA, send ACK
-        if (!message.isAck()) {
+        int senderId = message.getSenderId();
+
+        // Received ACK
+        if (message.isAck()) {
+            System.out.println("Received ACK message " + message);
+            Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
+            notAcked.remove(acked);
+            System.out.println("Removed  " + acked + " from nonAcked");
+        }
+        else {
             Message ackMessage = message.generateAck(pid);
             System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
             System.out.println("SL deliver message " + message);
             deliverInterface.deliver(message);
         }
-        // Received ACK
-        else if (notAcked.contains(seqNum)) {
-            System.out.println("Received ACK for message with seqNum " + seqNum);
-            notAcked.remove(seqNum);
-        }
-        else System.out.println("Error: Received ACK to message not sent");
     }
 
     public void close() {
         fll.close();
+    }
+
+
+    // Helper class to track acknowledged messages
+    public static class Tuple<X, Y> {
+        public final X first;
+        public final Y second;
+
+        public Tuple(X first, Y second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Tuple<?, ?> tuple = (Tuple<?, ?>) o;
+            return Objects.equals(first, tuple.first) &&
+                    Objects.equals(second, tuple.second);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(first, second);
+        }
+
+        @Override
+        public String toString() {
+            return "(" +
+                    first + ", " +
+                    second + ')';
+        }
     }
 }
