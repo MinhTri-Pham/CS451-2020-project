@@ -63,14 +63,13 @@ public class StubbornLink implements DeliverInterface {
 
     @Override
     public void deliver(Message message) {
-        System.out.println(String.format("Received message %s from host %d", message, message.getSenderId()));
         int seqNum = message.getSeqNum();
         // Received DATA, send ACK
         if (!message.isAck()) {
             Message ackMessage = message.generateAck(pid);
             System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
-            System.out.println("Sent the ACK");
+            System.out.println("SL deliver message " + message);
             deliverInterface.deliver(message);
         }
         // Received ACK
