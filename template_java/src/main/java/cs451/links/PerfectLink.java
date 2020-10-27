@@ -31,33 +31,32 @@ public class PerfectLink implements DeliverInterface {
         int msgSenderId = message.getSenderId();
         int msgSeqNum = message.getSeqNum();
 
-        deliverInterface.deliver(message);
         // Received a duplicate message
-//        System.out.println("PL deliver message " + message);
-//        if (delivered.contains(message) || maxContiguous.get(msgSenderId) <= msgSeqNum) {
-//            System.out.println("Received duplicate message " + message);
-//        }
-//        else {
-//            // Received a contiguous message, update maxContiguous and delivered
-//            if (msgSeqNum == maxContiguous.get(msgSenderId) + 1) {
-//                int i = 1;
-//                Message temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
-//                // Check if we have a new a contiguous sequence
-//                while (delivered.contains(temp)) {
-//                    delivered.remove(temp);
-//                    i++;
-//                    temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
-//                }
-//                // No +1 because the while loop above terminates when it finds first non-contiguous number
-//                maxContiguous.put(msgSenderId, msgSeqNum + i);
-//            }
-//            // Received a contiguous message, update delivered
-//            else {
-//                delivered.add(message);
-//            }
-//            // Deliver the message (regardless of whether it's contiguous or not)
-//            deliverInterface.deliver(message);
-//        }
+        System.out.println("PL deliver message " + message);
+        if (delivered.contains(message) || msgSeqNum <= maxContiguous.get(msgSenderId)) {
+            System.out.println("Received duplicate message " + message);
+        }
+        else {
+            // Received a contiguous message, update maxContiguous and delivered
+            if (msgSeqNum == maxContiguous.get(msgSenderId) + 1) {
+                int i = 1;
+                Message temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
+                // Check if we have a new a contiguous sequence
+                while (delivered.contains(temp)) {
+                    delivered.remove(temp);
+                    i++;
+                    temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
+                }
+                // No +1 because the while loop above terminates when it finds first non-contiguous number
+                maxContiguous.put(msgSenderId, msgSeqNum + i);
+            }
+            // Received a contiguous message, update delivered
+            else {
+                delivered.add(message);
+            }
+            // Deliver the message (regardless of whether it's contiguous or not)
+            deliverInterface.deliver(message);
+        }
     }
 
     public void close () {
