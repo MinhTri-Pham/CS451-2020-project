@@ -60,8 +60,8 @@ public class UniformReliableBroadcast implements DeliverInterface {
         for (Message pendingMsg : pending) {
             int pendingMsgSeqNum = pendingMsg.getSeqNum();
             int pendingMsgSenderId = pendingMsg.getSenderId();
-            if (canDeliver(pendingMsg) && pendingMsgSeqNum > maxContiguous.get(pendingMsgSenderId)
-                    && !delivered.contains(pendingMsg)) {
+            if (canDeliver(pendingMsg) && maxContiguous.get(pendingMsgSenderId) != null
+                    && pendingMsgSeqNum > maxContiguous.get(pendingMsgSenderId) && !delivered.contains(pendingMsg)) {
                 // Add pendingMsg to delivered set
                 if (pendingMsgSeqNum == maxContiguous.get(pendingMsg.getSenderId() + 1)) {
                     // Contiguous message
