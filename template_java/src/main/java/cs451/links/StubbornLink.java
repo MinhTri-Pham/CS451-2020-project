@@ -44,7 +44,7 @@ public class StubbornLink implements DeliverInterface {
             fll.send(message, host);
             Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
             notAcked.add(toAck);
-            System.out.println("Added  " + toAck + " to nonAcked");
+//            System.out.println("Added  " + toAck + " to nonAcked");
             // Retransmit if ACK not received within timeout
 //            int seqNum = message.getSeqNum();
 //            while(notAcked.contains(seqNum)) {
@@ -75,7 +75,6 @@ public class StubbornLink implements DeliverInterface {
             System.out.println("Received ACK message " + message);
             Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
             notAcked.remove(acked);
-            System.out.println("Removed  " + acked + " from nonAcked");
         }
         else {
             System.out.println("Received DATA message " + message);
