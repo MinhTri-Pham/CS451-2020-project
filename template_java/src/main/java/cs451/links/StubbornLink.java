@@ -78,10 +78,10 @@ public class StubbornLink implements DeliverInterface {
             System.out.println("Removed  " + acked + " from nonAcked");
         }
         else {
+            System.out.println("Received DATA message " + message);
             Message ackMessage = message.generateAck(pid);
             System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
-//            System.out.println("SL deliver message " + message);
             deliverInterface.deliver(message);
         }
     }
