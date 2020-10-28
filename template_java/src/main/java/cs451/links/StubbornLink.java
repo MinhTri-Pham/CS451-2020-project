@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-//import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeUnit;
 
 public class StubbornLink implements DeliverInterface {
     private int pid; // Pid of process
@@ -35,7 +35,6 @@ public class StubbornLink implements DeliverInterface {
         }
         else {
             // For DATA messages, have to make some checks
-            // What to set this to? Change it throughout execution?
             int maxNotAcked = 20;
             // Wait if we have too many unacknowledged messages
             while (notAcked.size() >= maxNotAcked) {
@@ -82,7 +81,7 @@ public class StubbornLink implements DeliverInterface {
             Message ackMessage = message.generateAck(pid);
             System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
-            System.out.println("SL deliver message " + message);
+//            System.out.println("SL deliver message " + message);
             deliverInterface.deliver(message);
         }
     }

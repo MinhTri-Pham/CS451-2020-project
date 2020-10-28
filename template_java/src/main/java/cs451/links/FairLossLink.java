@@ -40,7 +40,7 @@ public class FairLossLink implements DeliverInterface {
 
     @Override
     public void deliver(Message message) {
-        System.out.println("FL deliver message " + message);
+//        System.out.println("FL deliver message " + message);
         deliverInterface.deliver(message);
     }
 
