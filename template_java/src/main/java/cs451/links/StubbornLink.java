@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public class StubbornLink implements DeliverInterface {
     private int pid; // Pid of process
@@ -31,7 +30,7 @@ public class StubbornLink implements DeliverInterface {
     public void send(Message message, Host host){
         if (message.isAck()) {
             // ACKs be sent immediately
-            System.out.println(String.format("Sending ACK message %s to host %d", message, host.getId()));
+//            System.out.println(String.format("Sending ACK message %s to host %d", message, host.getId()));
             fll.send(message, host);
         }
         else {
@@ -46,11 +45,11 @@ public class StubbornLink implements DeliverInterface {
 //                }
 //
 //            }
-            System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
+//            System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
             fll.send(message, host);
             Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
             notAcked.add(toAck);
-            System.out.println("Added  " + toAck + " to nonAcked");
+//            System.out.println("Added  " + toAck + " to nonAcked");
             // Retransmit if ACK not received within timeout
 //            while(notAcked.contains(toAck)) {
 //                System.out.println("Waiting for ACK");
@@ -77,15 +76,15 @@ public class StubbornLink implements DeliverInterface {
 
         // Received ACK
         if (message.isAck()) {
-            System.out.println("Received ACK message " + message);
+//            System.out.println("Received ACK message " + message);
             Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
             notAcked.remove(acked);
-            System.out.println("Removed  " + acked + " from nonAcked");
+//            System.out.println("Removed  " + acked + " from nonAcked");
         }
         else {
-            System.out.println("Received DATA message " + message);
-            Message ackMessage = message.generateAck(pid);
-            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
+//            System.out.println("Received DATA message " + message);
+            Message ackMessage = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), true);
+//            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
             deliverInterface.deliver(message);
         }

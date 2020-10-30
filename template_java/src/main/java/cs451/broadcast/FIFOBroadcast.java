@@ -27,7 +27,7 @@ public class FIFOBroadcast implements DeliverInterface{
     }
 
     public void broadcast(Message message){
-        urb.broadcast(new Message(pid, lsn.incrementAndGet(), message.isAck()));
+        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.incrementAndGet(), message.isAck()));
     }
 
     @Override

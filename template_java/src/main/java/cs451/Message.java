@@ -6,11 +6,14 @@ import java.util.Objects;
 public class Message implements Serializable {
 
     private int senderId;
+    // Need to know the first process that broadcast a message for URB
+    private int firstSenderId;
     private int seqNum;
     private boolean isAck;
 
-    public Message(int sendId, int seqNum, boolean isAck) {
+    public Message(int sendId, int firstSenderId, int seqNum, boolean isAck) {
         this.senderId = sendId;
+        this.firstSenderId = firstSenderId;
         this.seqNum = seqNum;
         this.isAck = isAck;
     }
@@ -19,17 +22,14 @@ public class Message implements Serializable {
         return senderId;
     }
 
+    public int getFirstSenderId() { return firstSenderId; }
+
     public int getSeqNum() {
         return seqNum;
     }
 
     public boolean isAck() {
         return isAck;
-    }
-
-    // Generate ACK message (note that we switch source and destination)
-    public Message generateAck(int pid) {
-        return new Message(pid, seqNum, true);
     }
 
     public byte[] toData() throws IOException {
@@ -52,7 +52,7 @@ public class Message implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(senderId, seqNum, isAck);
+        return Objects.hash(senderId, firstSenderId, seqNum, isAck);
     }
 
     @Override
@@ -61,7 +61,8 @@ public class Message implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         Message message = (Message) o;
 
-        return seqNum == message.seqNum && isAck == message.isAck;
+        return senderId == message.senderId && firstSenderId == message.firstSenderId
+                && seqNum == message.seqNum && isAck == message.isAck;
     }
 
     @Override
@@ -70,7 +71,8 @@ public class Message implements Serializable {
         if (isAck) msgType = "ACK";
         else msgType = "DATA";
         return "Message(" + msgType
-                + ", sendId: " + senderId
+                + ", senderId: " + senderId
+                + ", firstSenderId: " + firstSenderId
                 + ", seqNum: " + seqNum
                 + ")";
     }
