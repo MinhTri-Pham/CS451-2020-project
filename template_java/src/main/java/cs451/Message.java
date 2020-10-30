@@ -1,7 +1,6 @@
 package cs451;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.util.Objects;
 
 public class Message implements Serializable {
@@ -33,11 +32,6 @@ public class Message implements Serializable {
         return new Message(pid, seqNum, true);
     }
 
-    // Message with given sequence number
-    public Message withSeqNum(int sn) {
-        return new Message(senderId, sn, isAck);
-    }
-
     public byte[] toData() throws IOException {
         ByteArrayOutputStream byteArrOutStream = new ByteArrayOutputStream();
         ObjectOutputStream objOutStr = new ObjectOutputStream(byteArrOutStream);
@@ -55,7 +49,6 @@ public class Message implements Serializable {
             return null;
        }
     }
-
 
     @Override
     public int hashCode() {

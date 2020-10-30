@@ -10,11 +10,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class UniformReliableBroadcast implements DeliverInterface {
 
     // Implements Majority ACK algorithm
+    private int pid; // Pid of broadcaster
     private BestEffortBroadcast beb;
-    Set<Message> delivered = ConcurrentHashMap.newKeySet();
     // To compress representation of delivered set,
     // for each sender, store sequence number sn such that messages with sequence number 1,..., sn have been delivered
-    Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
+    private Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
+    private Set<Message> delivered = ConcurrentHashMap.newKeySet();
     private Set<Message> pending = ConcurrentHashMap.newKeySet();
     private ConcurrentHashMap<Message, Set<Integer>> ack = new ConcurrentHashMap<>();
     private List<Host> hosts;
@@ -22,6 +23,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
     public UniformReliableBroadcast(int pid, int sourcePort, List<Host> hosts,
                                     Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
+        this.pid = pid;
         this.beb = new BestEffortBroadcast(pid, sourcePort, hosts, idToHost, this);
         this.hosts = hosts;
         this.deliverInterface = deliverInterface;
@@ -53,7 +55,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
         if (!pending.contains(message)) {
             pending.add(message);
-            beb.broadcast(message);
+            beb.broadcast(new Message(pid, message.getSeqNum(), message.isAck()));
         }
 
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)

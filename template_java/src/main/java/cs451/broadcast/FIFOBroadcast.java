@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class FIFOBroadcast implements DeliverInterface{
+    // Implements Broadcast with Sequence Number algorithm
+    private int pid;
     private UniformReliableBroadcast urb;
     private AtomicInteger lsn = new AtomicInteger(0);
     private Set<Message> pending = ConcurrentHashMap.newKeySet();;
@@ -18,14 +20,14 @@ public class FIFOBroadcast implements DeliverInterface{
 
     public FIFOBroadcast(int pid, int sourcePort, List<Host> hosts,
                          Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
-        // Implements Broadcast with Sequence Number algorithm
+        this.pid = pid;
         this.urb = new UniformReliableBroadcast(pid, sourcePort, hosts, idToHost, this);
         this.deliverInterface = deliverInterface;
         this.next = new AtomicIntegerArray(hosts.size());
     }
 
     public void broadcast(Message message){
-        urb.broadcast(message.withSeqNum(lsn.incrementAndGet()));
+        urb.broadcast(new Message(pid, lsn.incrementAndGet(), message.isAck()));
     }
 
     @Override
