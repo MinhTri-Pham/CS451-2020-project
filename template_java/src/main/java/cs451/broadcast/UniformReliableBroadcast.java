@@ -39,15 +39,15 @@ public class UniformReliableBroadcast implements DeliverInterface {
     @ Override
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
-        int meesageSendId = message.getSenderId();
+        int messageSenderId = message.getSenderId();
         Set<Integer> bebDeliveredAck = ack.get(message);
         if (bebDeliveredAck == null) {
             Set<Integer> singleSet = ConcurrentHashMap.newKeySet();
-            singleSet.add(meesageSendId);
+            singleSet.add(messageSenderId);
             ack.put(message, singleSet);
         }
         else {
-            bebDeliveredAck.add(meesageSendId);
+            bebDeliveredAck.add(messageSenderId);
             ack.put(message, bebDeliveredAck);
         }
 

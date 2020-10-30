@@ -37,36 +37,36 @@ public class StubbornLink implements DeliverInterface {
         else {
             // For DATA messages, have to make some checks
             //Wait if we have too many unacknowledged messages
-            while (notAcked.size() >= 20) {
-                System.out.println("Too many unacknowledged messages, can't send");
-                try {
-                    TimeUnit.MILLISECONDS.sleep(1000);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-
-            }
+//            while (notAcked.size() >= 20) {
+//                System.out.println("Too many unacknowledged messages, can't send");
+//                try {
+//                    TimeUnit.MILLISECONDS.sleep(1000);
+//                } catch (InterruptedException ie) {
+//                    Thread.currentThread().interrupt();
+//                }
+//
+//            }
             System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
             fll.send(message, host);
             Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
             notAcked.add(toAck);
             System.out.println("Added  " + toAck + " to nonAcked");
             // Retransmit if ACK not received within timeout
-            while(notAcked.contains(toAck)) {
-                System.out.println("Waiting for ACK");
-                try {
-                    TimeUnit.MILLISECONDS.sleep(timeout);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-                if (notAcked.contains(toAck)) {
-                    timeout *= 2;
-                    System.out.println("Haven't received ACK, double timeout and retransmit");
-                    fll.send(message, host);
-                }
-                // Message acknowledged so decrease timeout until some value - increase by what?
-                else timeout = Math.max(timeout - 100, 250);
-            }
+//            while(notAcked.contains(toAck)) {
+//                System.out.println("Waiting for ACK");
+//                try {
+//                    TimeUnit.MILLISECONDS.sleep(timeout);
+//                } catch (InterruptedException ie) {
+//                    Thread.currentThread().interrupt();
+//                }
+//                if (notAcked.contains(toAck)) {
+//                    timeout *= 2;
+//                    System.out.println("Haven't received ACK, double timeout and retransmit");
+//                    fll.send(message, host);
+//                }
+//                // Message acknowledged so decrease timeout until some value - increase by what?
+//                else timeout = Math.max(timeout - 100, 250);
+//            }
         }
     }
 

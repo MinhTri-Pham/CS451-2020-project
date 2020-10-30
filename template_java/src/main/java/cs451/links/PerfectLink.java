@@ -35,8 +35,6 @@ public class PerfectLink implements DeliverInterface {
         if (maxContiguous.get(msgSenderId) == null && msgSeqNum == 1) {
             maxContiguous.put(msgSenderId, 1);
             delivered.add(message);
-            System.out.println(maxContiguous);
-            System.out.println(delivered);
             deliverInterface.deliver(message);
         }
         // Received a duplicate message
@@ -62,8 +60,6 @@ public class PerfectLink implements DeliverInterface {
                 delivered.add(message);
             }
             // Deliver the message (regardless of whether it's contiguous or not)
-            System.out.println(maxContiguous);
-            System.out.println(delivered);
             deliverInterface.deliver(message);
         }
     }
