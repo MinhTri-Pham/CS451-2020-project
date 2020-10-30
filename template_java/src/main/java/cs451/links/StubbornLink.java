@@ -27,6 +27,7 @@ public class StubbornLink implements DeliverInterface {
         this.deliverInterface = deliverInterface;
     }
 
+    // TO DO: Test this really works when there are network delays, processes are down
     public void send(Message message, Host host){
         if (message.isAck()) {
             // ACKs be sent immediately
@@ -35,7 +36,7 @@ public class StubbornLink implements DeliverInterface {
         }
         else {
             // For DATA messages, have to make some checks
-//             Wait if we have too many unacknowledged messages
+            //Wait if we have too many unacknowledged messages
             while (notAcked.size() >= 20) {
                 System.out.println("Too many unacknowledged messages, can't send");
                 try {
@@ -79,7 +80,7 @@ public class StubbornLink implements DeliverInterface {
             System.out.println("Received ACK message " + message);
             Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
             notAcked.remove(acked);
-            System.out.println("Added  " + acked + " to nonAcked");
+            System.out.println("Removed  " + acked + " from nonAcked");
         }
         else {
             System.out.println("Received DATA message " + message);
