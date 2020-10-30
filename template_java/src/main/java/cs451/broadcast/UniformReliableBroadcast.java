@@ -66,15 +66,15 @@ public class UniformReliableBroadcast implements DeliverInterface {
                 if (pendingMsgSeqNum == maxContiguous.get(pendingMsg.getSenderId() + 1)) {
                     // Contiguous message
                     int i = 1;
-                    Message temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + 1 + i, false);
+                    Message temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + i, false);
                     // Check if we have a new a contiguous sequence
                     while (delivered.contains(temp)) {
                         delivered.remove(temp);
                         i++;
-                        temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + 1 + i, false);
+                        temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + i, false);
                     }
                     // No +1 because the while loop above terminates when it finds first non-contiguous number
-                    maxContiguous.put(pendingMsgSenderId, pendingMsgSeqNum + i);
+                    maxContiguous.put(pendingMsgSenderId, pendingMsgSeqNum + i - 1);
                 }
                 // Non-contiguous message
                 else delivered.add(pendingMsg);

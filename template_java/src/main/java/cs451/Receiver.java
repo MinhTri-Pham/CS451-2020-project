@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Receiver extends Thread {
@@ -39,6 +40,14 @@ public class Receiver extends Thread {
 
     public void close() {
         running.set(false);
+        // Make sure socket isn't closed except when running.get() is false
+        while(running.get()) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        }
         socket.close();
     }
 }

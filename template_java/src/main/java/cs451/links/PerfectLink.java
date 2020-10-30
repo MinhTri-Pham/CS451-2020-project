@@ -47,17 +47,17 @@ public class PerfectLink implements DeliverInterface {
             // Received a contiguous message, update maxContiguous and delivered
             if (msgSeqNum == maxContiguous.get(msgSenderId) + 1) {
                 int i = 1;
-                Message temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
+                Message temp = new Message(msgSenderId, msgSeqNum + i, false);
                 // Check if we have a new a contiguous sequence
                 while (delivered.contains(temp)) {
                     delivered.remove(temp);
                     i++;
-                    temp = new Message(msgSenderId, msgSeqNum + 1 + i, false);
+                    temp = new Message(msgSenderId, msgSeqNum + i, false);
                 }
                 // No +1 because the while loop above terminates when it finds first non-contiguous number
-                maxContiguous.put(msgSenderId, msgSeqNum + i);
+                maxContiguous.put(msgSenderId, msgSeqNum + i - 1);
             }
-            // Received a contiguous message, update delivered
+            // Received a non-contiguous message, update delivered
             else {
                 delivered.add(message);
             }

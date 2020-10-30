@@ -30,7 +30,7 @@ public class StubbornLink implements DeliverInterface {
     public void send(Message message, Host host){
         if (message.isAck()) {
             // ACKs be sent immediately
-            System.out.println(String.format("Sending message %s to host %d", message, host.getId()));
+//            System.out.println(String.format("Sending ACK message %s to host %d", message, host.getId()));
             fll.send(message, host);
         }
         else {
@@ -40,7 +40,7 @@ public class StubbornLink implements DeliverInterface {
             while (notAcked.size() >= maxNotAcked) {
                 System.out.println("Too many unacknowledged messages, can't send");
             }
-            System.out.println(String.format("Sending message %s to host %d", message, host.getId()));
+//            System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
             fll.send(message, host);
             Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
             notAcked.add(toAck);
@@ -72,14 +72,14 @@ public class StubbornLink implements DeliverInterface {
 
         // Received ACK
         if (message.isAck()) {
-            System.out.println("Received ACK message " + message);
+//            System.out.println("Received ACK message " + message);
             Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
             notAcked.remove(acked);
         }
         else {
-            System.out.println("Received DATA message " + message);
+//            System.out.println("Received DATA message " + message);
             Message ackMessage = message.generateAck(pid);
-            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
+//            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
             deliverInterface.deliver(message);
         }
