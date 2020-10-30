@@ -18,7 +18,7 @@ public class StubbornLink implements DeliverInterface {
     // The tuple stores the process id and the message sequence number from resp. for which ACK is expected
     private Set<Tuple<Integer, Integer>> notAcked = ConcurrentHashMap.newKeySet();
     private DeliverInterface deliverInterface;
-    private int timeout = 1000; // Timeout in milliseconds -2
+    private int timeout = 250; // Timeout in milliseconds
 
     public StubbornLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
@@ -30,38 +30,42 @@ public class StubbornLink implements DeliverInterface {
     public void send(Message message, Host host){
         if (message.isAck()) {
             // ACKs be sent immediately
-//            System.out.println(String.format("Sending ACK message %s to host %d", message, host.getId()));
+            System.out.println(String.format("Sending ACK message %s to host %d", message, host.getId()));
             fll.send(message, host);
         }
         else {
             // For DATA messages, have to make some checks
-            int maxNotAcked = 20;
-            // Wait if we have too many unacknowledged messages
-            while (notAcked.size() >= maxNotAcked) {
+//             Wait if we have too many unacknowledged messages
+            while (notAcked.size() >= 20) {
                 System.out.println("Too many unacknowledged messages, can't send");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+
             }
-//            System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
+            System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
             fll.send(message, host);
             Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
             notAcked.add(toAck);
-//            System.out.println("Added  " + toAck + " to nonAcked");
+            System.out.println("Added  " + toAck + " to nonAcked");
             // Retransmit if ACK not received within timeout
-//            int seqNum = message.getSeqNum();
-//            while(notAcked.contains(seqNum)) {
-//                System.out.println("Waiting for ACK");
-//                try {
-//                    TimeUnit.MILLISECONDS.sleep(timeout);
-//                } catch (InterruptedException ie) {
-//                    Thread.currentThread().interrupt();
-//                }
-//                if (notAcked.contains(seqNum)) {
-//                    timeout *= 2;
-//                    System.out.println("Haven't received ACK, double timeout and retransmit");
-//                    fll.send(message, host);
-//                }
-//                // Message acknowledged so decrease timeout until some value - increase by what?
-//                else timeout = Math.max(timeout - 100, 250);
-//            }
+            while(notAcked.contains(toAck)) {
+                System.out.println("Waiting for ACK");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(timeout);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+                if (notAcked.contains(toAck)) {
+                    timeout *= 2;
+                    System.out.println("Haven't received ACK, double timeout and retransmit");
+                    fll.send(message, host);
+                }
+                // Message acknowledged so decrease timeout until some value - increase by what?
+                else timeout = Math.max(timeout - 100, 250);
+            }
         }
     }
 
@@ -72,14 +76,15 @@ public class StubbornLink implements DeliverInterface {
 
         // Received ACK
         if (message.isAck()) {
-//            System.out.println("Received ACK message " + message);
+            System.out.println("Received ACK message " + message);
             Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
             notAcked.remove(acked);
+            System.out.println("Added  " + acked + " to nonAcked");
         }
         else {
-//            System.out.println("Received DATA message " + message);
+            System.out.println("Received DATA message " + message);
             Message ackMessage = message.generateAck(pid);
-//            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
+            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
             deliverInterface.deliver(message);
         }
