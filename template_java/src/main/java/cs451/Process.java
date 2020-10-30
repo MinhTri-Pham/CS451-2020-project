@@ -43,7 +43,6 @@ public class Process implements DeliverInterface {
     }
 
     public void writeLog() {
-        System.out.println(logs);
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(output));
             for (String log : logs) writer.write(log);

@@ -32,22 +32,12 @@ public class Receiver extends Thread {
                 socket.receive(dpReceive);
                 Message message = Message.fromData(dpReceive.getData());
                 deliverInterface.deliver(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            } catch (IOException e) {}
         }
     }
 
     public void close() {
         running.set(false);
-        // Make sure socket isn't closed except when running.get() is false
-        while(running.get()) {
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
-        }
         socket.close();
     }
 }
