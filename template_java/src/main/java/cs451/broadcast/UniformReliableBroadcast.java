@@ -77,9 +77,8 @@ public class UniformReliableBroadcast implements DeliverInterface {
             Message pendingMessage = pending.get(pendingKey);
             int seqNum = pendingKey.getSeqNum();
             int firstSender = pendingKey.getFirstSenderId();
-            if (canDeliver(pendingKey)
-               && (maxContiguous.get(firstSender) == null || seqNum > maxContiguous.get(firstSender))
-               && !delivered.contains(pendingKey)) {
+            if (canDeliver(pendingKey) && maxContiguous.get(firstSender) != null
+                    && seqNum > maxContiguous.get(firstSender) && !delivered.contains(pendingKey)) {
                 // Add pendingKey to delivered set
                 if (seqNum == maxContiguous.get(firstSender) + 1) {
                     // Contigous
@@ -103,8 +102,8 @@ public class UniformReliableBroadcast implements DeliverInterface {
 //        for (Message pendingMsg : pending) {
 //            int pendingMsgSeqNum = pendingMsg.getSeqNum();
 //            int pendingMsgSenderId = pendingMsg.getSenderId();
-//            if (canDeliver(pendingMsg) && (maxContiguous.get(pendingMsgSenderId) == null
-//                    || pendingMsgSeqNum > maxContiguous.get(pendingMsgSenderId)) && !delivered.contains(pendingMsg)) {
+//            if (canDeliver(pendingMsg) && maxContiguous.get(pendingMsgSenderId) != null
+//                    && pendingMsgSeqNum > maxContiguous.get(pendingMsgSenderId) && !delivered.contains(pendingMsg)) {
 //                // Add pendingMsg to delivered set
 //                if (pendingMsgSeqNum == maxContiguous.get(pendingMsg.getSenderId() + 1)) {
 //                    // Contiguous message
