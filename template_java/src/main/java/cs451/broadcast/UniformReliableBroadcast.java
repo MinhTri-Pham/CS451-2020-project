@@ -17,10 +17,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
     private Map<MessageFirst, Message> pending = new ConcurrentHashMap<>();
     private ConcurrentHashMap<MessageFirst, Set<Integer>> ack = new ConcurrentHashMap<>();
 
-//    private Set<Message> delivered = ConcurrentHashMap.newKeySet();
-//    private Set<Message> pending = ConcurrentHashMap.newKeySet();
-//    private ConcurrentHashMap<Message, Set<Integer>> ack = new ConcurrentHashMap<>();
-
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
 
@@ -66,62 +62,48 @@ public class UniformReliableBroadcast implements DeliverInterface {
             pending.put(bebDeliveredKey, message);
             System.out.println("pending: " + pending);
             Message msg = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
-            System.out.println("BEB broadcast delivered" + msg);
+            System.out.println("BEB broadcast delivered " + msg);
             beb.broadcast(msg);
         }
 
+
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
         Iterator<MessageFirst> pendingIt = pending.keySet().iterator();
-        while(pendingIt.hasNext()) {
+        while (pendingIt.hasNext()) {
             MessageFirst pendingKey = pendingIt.next();
-            Message pendingMessage = pending.get(pendingKey);
-            int seqNum = pendingKey.getSeqNum();
-            int firstSender = pendingKey.getFirstSenderId();
-            if (canDeliver(pendingKey) && maxContiguous.get(firstSender) != null
-                    && seqNum > maxContiguous.get(firstSender) && !delivered.contains(pendingKey)) {
-                // Add pendingKey to delivered set
-                if (seqNum == maxContiguous.get(firstSender) + 1) {
-                    // Contiguous
-                    int i = 1;
-                    MessageFirst temp = new MessageFirst(firstSender, seqNum + 1);
-                    while(delivered.contains(temp)) {
-                        delivered.remove(temp);
-                        i++;
-                        temp = new MessageFirst(firstSender, seqNum + 1);
-                    }
-                    // Minus 1 because the while loop above terminates when it finds first non-contiguous number
-                    maxContiguous.put(firstSender, seqNum + i - 1);
-                }
-                else delivered.add(pendingKey);
-                System.out.println("URB deliver " + message);
-                deliverInterface.deliver(pendingMessage);
+            if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
+                delivered.add(pendingKey);
+                deliverInterface.deliver(pending.get(pendingKey));
                 pendingIt.remove();
             }
         }
 
-//        for (Message pendingMsg : pending) {
-//            int pendingMsgSeqNum = pendingMsg.getSeqNum();
-//            int pendingMsgSenderId = pendingMsg.getSenderId();
-//            if (canDeliver(pendingMsg) && maxContiguous.get(pendingMsgSenderId) != null
-//                    && pendingMsgSeqNum > maxContiguous.get(pendingMsgSenderId) && !delivered.contains(pendingMsg)) {
-//                // Add pendingMsg to delivered set
-//                if (pendingMsgSeqNum == maxContiguous.get(pendingMsg.getSenderId() + 1)) {
-//                    // Contiguous message
+//        // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
+//        Iterator<MessageFirst> pendingIt = pending.keySet().iterator();
+//        while(pendingIt.hasNext()) {
+//            MessageFirst pendingKey = pendingIt.next();
+//            Message pendingMessage = pending.get(pendingKey);
+//            int seqNum = pendingKey.getSeqNum();
+//            int firstSender = pendingKey.getFirstSenderId();
+//            if (canDeliver(pendingKey) && maxContiguous.get(firstSender) != null
+//                    && seqNum > maxContiguous.get(firstSender) && !delivered.contains(pendingKey)) {
+//                // Add pendingKey to delivered set
+//                if (seqNum == maxContiguous.get(firstSender) + 1) {
+//                    // Contiguous
 //                    int i = 1;
-//                    Message temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + i, false);
-//                    // Check if we have a new a contiguous sequence
-//                    while (delivered.contains(temp)) {
+//                    MessageFirst temp = new MessageFirst(firstSender, seqNum + 1);
+//                    while(delivered.contains(temp)) {
 //                        delivered.remove(temp);
 //                        i++;
-//                        temp = new Message(pendingMsgSenderId, pendingMsgSeqNum + i, false);
+//                        temp = new MessageFirst(firstSender, seqNum + 1);
 //                    }
 //                    // Minus 1 because the while loop above terminates when it finds first non-contiguous number
-//                    maxContiguous.put(pendingMsgSenderId, pendingMsgSeqNum + i - 1);
+//                    maxContiguous.put(firstSender, seqNum + i - 1);
 //                }
-//                // Non-contiguous message
-//                else delivered.add(pendingMsg);
-//                deliverInterface.deliver(pendingMsg);
-//                pending.remove(pendingMsg); // Garbage clean pending
+//                else delivered.add(pendingKey);
+//                System.out.println("URB deliver " + pendingMessage);
+//                deliverInterface.deliver(pendingMessage);
+//                pendingIt.remove();
 //            }
 //        }
     }
