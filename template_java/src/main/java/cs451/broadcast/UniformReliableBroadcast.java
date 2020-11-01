@@ -64,10 +64,10 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
         if (!pending.containsKey(bebDeliveredKey)) {
             pending.put(bebDeliveredKey, message);
-            System.out.println("Adding new entry to pending");
             System.out.println("pending: " + pending);
-            System.out.println("BEB broadcast " + message);
-            beb.broadcast(new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck()));
+            Message msg = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
+            System.out.println("BEB broadcast delivered" + msg);
+            beb.broadcast(msg);
         }
 
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
@@ -81,7 +81,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
                     && seqNum > maxContiguous.get(firstSender) && !delivered.contains(pendingKey)) {
                 // Add pendingKey to delivered set
                 if (seqNum == maxContiguous.get(firstSender) + 1) {
-                    // Contigous
+                    // Contiguous
                     int i = 1;
                     MessageFirst temp = new MessageFirst(firstSender, seqNum + 1);
                     while(delivered.contains(temp)) {

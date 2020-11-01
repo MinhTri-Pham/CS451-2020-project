@@ -1,6 +1,5 @@
 package cs451;
 
-import cs451.broadcast.BestEffortBroadcast;
 import cs451.broadcast.UniformReliableBroadcast;
 
 import java.io.BufferedWriter;
@@ -14,8 +13,7 @@ import java.util.Map;
 public class Process implements DeliverInterface {
     private int pid;
     private int nbMessagesToBroadcast;
-    private BestEffortBroadcast beb;
-//    private UniformReliableBroadcast urb;
+    private UniformReliableBroadcast urb;
     private List<String> logs; // Store logs in memory while broadcasting/delivering
     private String output; // Name of output file
 
@@ -28,15 +26,13 @@ public class Process implements DeliverInterface {
 
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
-        this.beb = new BestEffortBroadcast(pid, port, hosts, idToHost, this);
-//        this.urb = new UniformReliableBroadcast(pid, port, hosts, idToHost, this);
+        this.urb = new UniformReliableBroadcast(pid, port, hosts, idToHost, this);
     }
 
     public void broadcast() {
         for (int i = 1; i <= nbMessagesToBroadcast; i++) {
-            Message broadcastMsg = new Message(pid, i, i,false);
-            beb.broadcast(broadcastMsg);
-//            urb.broadcast(broadcastMsg);
+            Message broadcastMsg = new Message(pid, pid, i,false);
+            urb.broadcast(broadcastMsg);
             logs.add(String.format("b %d\n",i));
         }
     }
@@ -58,6 +54,6 @@ public class Process implements DeliverInterface {
     }
 
     public void close() {
-        beb.close();
+        urb.close();
     }
 }
