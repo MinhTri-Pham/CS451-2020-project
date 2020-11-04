@@ -45,7 +45,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
     }
 
     public void broadcast(Message message) {
-//        logs.add("URB broadcast " + message);
         pending.put(new MessageSign(message.getFirstSenderId(), message.getSeqNum()), message);
         beb.broadcast(message);
     }

@@ -14,7 +14,7 @@ public class FIFOBroadcast implements DeliverInterface{
     // Implements Broadcast with Sequence Number algorithm
     private int pid;
     private UniformReliableBroadcast urb;
-    private AtomicInteger lsn = new AtomicInteger(0);
+    private AtomicInteger lsn = new AtomicInteger(1);
     private Map<MessageSign, Message> pending = new ConcurrentHashMap<>();
     private AtomicIntegerArray next;
     private DeliverInterface deliverInterface;
@@ -24,25 +24,35 @@ public class FIFOBroadcast implements DeliverInterface{
         this.pid = pid;
         this.urb = new UniformReliableBroadcast(pid, sourcePort, hosts, idToHost, this);
         this.deliverInterface = deliverInterface;
-        this.next = new AtomicIntegerArray(hosts.size());
+
+        int[] nextTmp = new int[hosts.size() + 1];
+        Arrays.fill(nextTmp, 1);
+        this.next = new AtomicIntegerArray(nextTmp);
     }
 
     public void broadcast(Message message){
-        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.incrementAndGet(), message.isAck()));
+        System.out.println("URB broadcast " + message);
+        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck()));
     }
 
     @Override
     public void deliver(Message message) {
+        System.out.println("URB delivered " + message);
         int firstSender = message.getFirstSenderId();
         int seqNum = message.getSeqNum();
-        pending.put(new MessageSign(firstSender, seqNum), message);
-        Iterator<MessageSign> pendingIt = pending.keySet().iterator();
-        while (pendingIt.hasNext()) {
-            MessageSign pendingKey = pendingIt.next();
-            if (pendingKey.getSeqNum() == next.get(firstSender)) {
-                next.incrementAndGet(firstSender);
-                deliverInterface.deliver(pending.get(pendingKey));
-                pendingIt.remove();
+        System.out.println(next);
+        // No point trying to deliver if got message with sequence number < next sequence to be delivered
+        // process withg id firstSender
+        if (seqNum >= next.get(firstSender)) {
+            pending.put(new MessageSign(firstSender, seqNum), message);
+            Iterator<MessageSign> pendingIt = pending.keySet().iterator();
+            while (pendingIt.hasNext()) {
+                MessageSign pendingKey = pendingIt.next();
+                if (pendingKey.getSeqNum() == next.get(firstSender)) {
+                    next.incrementAndGet(firstSender);
+                    deliverInterface.deliver(pending.get(pendingKey));
+                    pendingIt.remove();
+                }
             }
         }
     }
