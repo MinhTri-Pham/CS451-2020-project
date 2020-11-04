@@ -36,10 +36,10 @@ public class UniformReliableBroadcast implements DeliverInterface {
         int numAcknowledged = ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size();
         boolean result = 2*ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size() > hosts.size();
         if (result) {
-            logs.add("Can URB deliver " + messageSign);
+            logs.add("Can URB deliver " + messageSign + "\n");
         }
         else {
-            logs.add(String.format("Could not deliver %s because only %d out of %d acknowledged it",
+            logs.add(String.format("Could not deliver %s because only %d out of %d acknowledged it\n",
                     messageSign,numAcknowledged,hosts.size()));
         }
         return result;
@@ -76,11 +76,11 @@ public class UniformReliableBroadcast implements DeliverInterface {
         Iterator<MessageSign> pendingIt = pending.keySet().iterator();
         while (pendingIt.hasNext()) {
             MessageSign pendingKey = pendingIt.next();
-            logs.add("Try to URB deliver " + pendingKey);
+            logs.add("Try to URB deliver " + pendingKey + "\n");
             if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
                 delivered.add(pendingKey);
                 Message pendingMessage = pending.get(pendingKey);
-                logs.add("URB deliver " + pendingMessage);
+                logs.add("URB deliver " + pendingMessage + "\n");
                 deliverInterface.deliver(pendingMessage);
                 pendingIt.remove(); //garbage clean from pending
             }
@@ -118,7 +118,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
     public void writeLog() {
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("urb_debug.txt"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(String.format("urb_debug_%d.txt", pid)));
             for (String log : logs) writer.write(log);
             writer.close();
         }
