@@ -6,7 +6,6 @@ import cs451.Message;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -15,10 +14,10 @@ public class StubbornLink implements DeliverInterface {
     private Map<Integer, Host> idToHost; // Mapping between pids and hosts (for ACKs)
     private FairLossLink fll; // Channel for sending and receiving
     // Messages sent but not acknowledged
-    // The tuple stores the process id and the message sequence number from resp. for which ACK is expected
-    private Set<Tuple<Integer, Integer>> notAcked = ConcurrentHashMap.newKeySet();
+    // The tuple stores the message sequence number and id of host from which for which ACK is expected
+    private Map<Tuple<Integer, Integer>, Message> notAcked = new ConcurrentHashMap<>();
     private DeliverInterface deliverInterface;
-    private int timeout = 250; // Timeout in milliseconds
+    private int timeout = 250; // Timeout in milliseconds (what is a good initial value)
 
     public StubbornLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
@@ -27,47 +26,35 @@ public class StubbornLink implements DeliverInterface {
         this.deliverInterface = deliverInterface;
     }
 
-    // TO DO: Test this really works when there are network delays, processes are down
     public void send(Message message, Host host){
-        if (message.isAck()) {
-            // ACKs be sent immediately
-//            System.out.println(String.format("Sending ACK message %s to host %d", message, host.getId()));
-            fll.send(message, host);
-        }
-        else {
-            // For DATA messages, have to make some checks
-            //Wait if we have too many unacknowledged messages
-//            while (notAcked.size() >= 20) {
-//                System.out.println("Too many unacknowledged messages, can't send");
-//                try {
-//                    TimeUnit.MILLISECONDS.sleep(1000);
-//                } catch (InterruptedException ie) {
-//                    Thread.currentThread().interrupt();
-//                }
-//
-//            }
-//            System.out.println(String.format("Sending DATA message %s to host %d", message, host.getId()));
-            fll.send(message, host);
-            Tuple<Integer, Integer> toAck = new Tuple<>(host.getId(), message.getSeqNum());
-            notAcked.add(toAck);
-//            System.out.println("Added  " + toAck + " to nonAcked");
-            // Retransmit if ACK not received within timeout
-            while(notAcked.contains(toAck)) {
-                System.out.println("Waiting for ACK");
+        // ACKs can be sent immediately
+        // For DATA messages, enforce some flow control
+        if (!message.isAck()) {
+            // If too many unacknowledged messages, have to wait for acknowledgements (can't send new messages)
+            // What is a good value?
+            int maxNotAcked = 20;
+            while (notAcked.size() >= maxNotAcked) {
+                // Wait for some time to see if acknowledgements arrive
                 try {
                     TimeUnit.MILLISECONDS.sleep(timeout);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                if (notAcked.contains(toAck)) {
+                // If not, resend unacknowledged messages
+                // Double timeout for next waiting
+                if (notAcked.size() >= maxNotAcked) {
+                    for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
+                        fll.send(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
+                    }
                     timeout *= 2;
-                    System.out.println("Haven't received ACK, double timeout and retransmit");
-                    fll.send(message, host);
                 }
-                // Message acknowledged so decrease timeout until some value - increase by what?
+                // By how much to decrease?
                 else timeout = Math.max(timeout - 100, 250);
             }
+            notAcked.put(new Tuple<>(host.getId(), message.getSeqNum()), message);
+            System.out.println("notAcked " + notAcked);
         }
+        fll.send(message, host);
     }
 
     @Override
@@ -77,15 +64,14 @@ public class StubbornLink implements DeliverInterface {
 
         // Received ACK
         if (message.isAck()) {
-//            System.out.println("Received ACK message " + message);
-            Tuple<Integer, Integer> acked = new Tuple<>(senderId, seqNum);
-            notAcked.remove(acked);
-//            System.out.println("Removed  " + acked + " from nonAcked");
+            System.out.println("Received ACK message " + message);
+            notAcked.remove(new Tuple<>(senderId, seqNum));
+            System.out.println("notAcked " + notAcked);
         }
         else {
-//            System.out.println("Received DATA message " + message);
+            System.out.println("Received DATA message " + message);
             Message ackMessage = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), true);
-//            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
+            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
             fll.send(ackMessage, idToHost.get(message.getSenderId()));
             deliverInterface.deliver(message);
         }

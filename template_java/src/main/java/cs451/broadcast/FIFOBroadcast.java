@@ -33,18 +33,18 @@ public class FIFOBroadcast implements DeliverInterface{
     public void broadcast(Message message){
         Message toSend = new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck());
         urb.broadcast(toSend);
-        System.out.println("FIFO broadcast " + toSend);
+//        System.out.println("FIFO broadcast " + toSend);
 
     }
 
     @Override
     public void deliver(Message message) {
-        System.out.println("URB delivered " + message);
+//        System.out.println("URB delivered " + message);
         int firstSender = message.getFirstSenderId();
         int seqNum = message.getSeqNum();
-        System.out.println(next);
+//        System.out.println("next: " + next);
         // No point trying to deliver if got message with sequence number < next sequence to be delivered
-        // process withg id firstSender
+        // process with id firstSender
         if (seqNum >= next.get(firstSender)) {
             pending.put(new MessageSign(firstSender, seqNum), message);
             Iterator<MessageSign> pendingIt = pending.keySet().iterator();
@@ -54,7 +54,7 @@ public class FIFOBroadcast implements DeliverInterface{
                     next.incrementAndGet(firstSender);
                     Message pendingMsg = pending.get(pendingKey);
                     deliverInterface.deliver(pendingMsg);
-                    System.out.println("FIFO deliver: " + pendingMsg);
+//                    System.out.println("FIFO deliver: " + pendingMsg);
                     pendingIt.remove();
                 }
             }

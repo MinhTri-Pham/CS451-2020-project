@@ -34,14 +34,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
     private boolean canDeliver(MessageSign messageSign) {
         return 2*ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size() > hosts.size();
-//        boolean result = 2*ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size() > hosts.size();
-//        if (result) {
-//            logs.add("Can URB deliver " + messageSign + "\n");
-//        }
-//        else {
-//            logs.add("Can't URB deliver " + messageSign + "\n");
-//        }
-//        return result;
     }
 
     public void broadcast(Message message) {
