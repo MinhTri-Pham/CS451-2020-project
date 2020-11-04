@@ -31,8 +31,10 @@ public class FIFOBroadcast implements DeliverInterface{
     }
 
     public void broadcast(Message message){
-        System.out.println("URB broadcast " + message);
-        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck()));
+        Message toSend = new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck());
+        urb.broadcast(toSend);
+        System.out.println("FIFO broadcast " + toSend);
+
     }
 
     @Override
@@ -50,7 +52,9 @@ public class FIFOBroadcast implements DeliverInterface{
                 MessageSign pendingKey = pendingIt.next();
                 if (pendingKey.getSeqNum() == next.get(firstSender)) {
                     next.incrementAndGet(firstSender);
-                    deliverInterface.deliver(pending.get(pendingKey));
+                    Message pendingMsg = pending.get(pendingKey);
+                    deliverInterface.deliver(pendingMsg);
+                    System.out.println("FIFO deliver: " + pendingMsg);
                     pendingIt.remove();
                 }
             }
