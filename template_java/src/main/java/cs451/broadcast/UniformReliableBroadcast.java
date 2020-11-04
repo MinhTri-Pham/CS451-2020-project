@@ -79,9 +79,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
 //            logs.add("Try to URB deliver " + pendingKey + "\n");
             if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
                 delivered.add(pendingKey);
-                Message pendingMessage = pending.get(pendingKey);
-//                logs.add("URB deliver " + pendingMessage + "\n");
-                deliverInterface.deliver(pendingMessage);
+                deliverInterface.deliver(pending.get(pendingKey));
                 pendingIt.remove(); //garbage clean from pending
             }
         }

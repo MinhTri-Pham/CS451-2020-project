@@ -3,6 +3,7 @@ package cs451.broadcast;
 import cs451.DeliverInterface;
 import cs451.Host;
 import cs451.Message;
+import cs451.MessageSign;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ public class FIFOBroadcast implements DeliverInterface{
     private int pid;
     private UniformReliableBroadcast urb;
     private AtomicInteger lsn = new AtomicInteger(0);
-    private Set<Message> pending = ConcurrentHashMap.newKeySet();;
+    private Map<MessageSign, Message> pending = new ConcurrentHashMap<>();
     private AtomicIntegerArray next;
     private DeliverInterface deliverInterface;
 
@@ -32,12 +33,16 @@ public class FIFOBroadcast implements DeliverInterface{
 
     @Override
     public void deliver(Message message) {
-        pending.add(message);
-        for (Message pendingMsg : pending) {
-            if (next.get(pendingMsg.getSenderId()) == pendingMsg.getSeqNum()) {
-                next.incrementAndGet(pendingMsg.getSenderId());
-                pending.remove(pendingMsg);
-                deliverInterface.deliver(pendingMsg);
+        int firstSender = message.getFirstSenderId();
+        int seqNum = message.getSeqNum();
+        pending.put(new MessageSign(firstSender, seqNum), message);
+        Iterator<MessageSign> pendingIt = pending.keySet().iterator();
+        while (pendingIt.hasNext()) {
+            MessageSign pendingKey = pendingIt.next();
+            if (pendingKey.getSeqNum() == next.get(firstSender)) {
+                next.incrementAndGet(firstSender);
+                deliverInterface.deliver(pending.get(pendingKey));
+                pendingIt.remove();
             }
         }
     }
