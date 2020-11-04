@@ -36,7 +36,7 @@ public class MessageSign {
 
     @Override
     public String toString() {
-        return "MessageFirst(firstSenderId: "  + firstSenderId
+        return "MessageSign(firstSenderId: "  + firstSenderId
                 + ", seqNum: " + seqNum
                 + ")";
     }

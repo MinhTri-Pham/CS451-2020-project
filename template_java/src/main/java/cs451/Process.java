@@ -14,14 +14,13 @@ public class Process implements DeliverInterface {
     private int pid;
     private int nbMessagesToBroadcast;
     private UniformReliableBroadcast urb;
-    private List<String> logs; // Store logs in memory while broadcasting/delivering
+    private List<String> logs = new ArrayList<>(); // Store logs in memory while broadcasting/delivering
     private String output; // Name of output file
 
     public Process(int pid, int port, List<Host> hosts,
                    int nbMessagesToBroadcast, String output) {
         this.pid = pid;
         this.nbMessagesToBroadcast = nbMessagesToBroadcast;
-        this.logs = new ArrayList<>();
         this.output = output;
 
         Map<Integer, Host> idToHost = new HashMap<>();
@@ -54,6 +53,7 @@ public class Process implements DeliverInterface {
     }
 
     public void close() {
+        urb.writeLog();
         urb.close();
     }
 }

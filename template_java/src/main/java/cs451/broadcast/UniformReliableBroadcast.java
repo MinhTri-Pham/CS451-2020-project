@@ -2,6 +2,9 @@ package cs451.broadcast;
 
 import cs451.*;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,6 +19,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
     private Set<MessageSign> delivered = ConcurrentHashMap.newKeySet();
     private Map<MessageSign, Message> pending = new ConcurrentHashMap<>();
     private ConcurrentHashMap<MessageSign, Set<Integer>> ack = new ConcurrentHashMap<>();
+    private List<String> logs = new ArrayList<>();
 
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
@@ -30,19 +34,19 @@ public class UniformReliableBroadcast implements DeliverInterface {
 
     private boolean canDeliver(MessageSign messageSign) {
         int numAcknowledged = ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size();
-        boolean result = 2*numAcknowledged > hosts.size();
+        boolean result = 2*ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size() > hosts.size();
         if (result) {
-            System.out.println("Can URB deliver " + messageSign);
+            logs.add("Can URB deliver " + messageSign);
         }
         else {
-            System.out.println(String.format("Could not deliver %s because only %d out of %d acknowledged it",
+            logs.add(String.format("Could not deliver %s because only %d out of %d acknowledged it",
                     messageSign,numAcknowledged,hosts.size()));
         }
         return result;
     }
 
     public void broadcast(Message message) {
-        System.out.println("URB broadcast " + message);
+        logs.add("URB broadcast " + message);
         pending.put(new MessageSign(message.getFirstSenderId(), message.getSeqNum()), message);
         beb.broadcast(message);
     }
@@ -50,7 +54,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
     @ Override
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
-        System.out.println("BEB delivered " + message);
         MessageSign bebDeliveredKey = new MessageSign(message.getFirstSenderId(), message.getSeqNum());
         Set<Integer> bebDeliveredAck = ack.get(bebDeliveredKey);
         if (bebDeliveredAck == null) {
@@ -66,7 +69,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
         if (!pending.containsKey(bebDeliveredKey)) {
             pending.put(bebDeliveredKey, message);
             Message msg = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
-            System.out.println("BEB broadcast delivered " + msg);
             beb.broadcast(msg);
         }
 
@@ -74,11 +76,11 @@ public class UniformReliableBroadcast implements DeliverInterface {
         Iterator<MessageSign> pendingIt = pending.keySet().iterator();
         while (pendingIt.hasNext()) {
             MessageSign pendingKey = pendingIt.next();
-            System.out.println("Try to URB deliver " + pendingKey);
+            logs.add("Try to URB deliver " + pendingKey);
             if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
                 delivered.add(pendingKey);
                 Message pendingMessage = pending.get(pendingKey);
-                System.out.println("URB deliver " + pendingMessage);
+                logs.add("URB deliver " + pendingMessage);
                 deliverInterface.deliver(pendingMessage);
                 pendingIt.remove(); //garbage clean from pending
             }
@@ -112,6 +114,17 @@ public class UniformReliableBroadcast implements DeliverInterface {
 //                pendingIt.remove();
 //            }
 //        }
+    }
+
+    public void writeLog() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("urb_debug.txt"));
+            for (String log : logs) writer.write(log);
+            writer.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void close() {
