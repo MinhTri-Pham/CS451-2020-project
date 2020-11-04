@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class StubbornLink implements DeliverInterface {
     private int pid; // Pid of process
@@ -51,21 +52,21 @@ public class StubbornLink implements DeliverInterface {
             notAcked.add(toAck);
 //            System.out.println("Added  " + toAck + " to nonAcked");
             // Retransmit if ACK not received within timeout
-//            while(notAcked.contains(toAck)) {
-//                System.out.println("Waiting for ACK");
-//                try {
-//                    TimeUnit.MILLISECONDS.sleep(timeout);
-//                } catch (InterruptedException ie) {
-//                    Thread.currentThread().interrupt();
-//                }
-//                if (notAcked.contains(toAck)) {
-//                    timeout *= 2;
-//                    System.out.println("Haven't received ACK, double timeout and retransmit");
-//                    fll.send(message, host);
-//                }
-//                // Message acknowledged so decrease timeout until some value - increase by what?
-//                else timeout = Math.max(timeout - 100, 250);
-//            }
+            while(notAcked.contains(toAck)) {
+                System.out.println("Waiting for ACK");
+                try {
+                    TimeUnit.MILLISECONDS.sleep(timeout);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+                if (notAcked.contains(toAck)) {
+                    timeout *= 2;
+                    System.out.println("Haven't received ACK, double timeout and retransmit");
+                    fll.send(message, host);
+                }
+                // Message acknowledged so decrease timeout until some value - increase by what?
+                else timeout = Math.max(timeout - 100, 250);
+            }
         }
     }
 
