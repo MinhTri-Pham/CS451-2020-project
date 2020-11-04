@@ -13,9 +13,9 @@ public class UniformReliableBroadcast implements DeliverInterface {
     // To compress representation of delivered set. For each first sender,
     // store sequence number n such that messages with sequence number 1,..., n have been delivered
     private Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
-    private Set<MessageFirst> delivered = ConcurrentHashMap.newKeySet();
-    private Map<MessageFirst, Message> pending = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<MessageFirst, Set<Integer>> ack = new ConcurrentHashMap<>();
+    private Set<MessageSign> delivered = ConcurrentHashMap.newKeySet();
+    private Map<MessageSign, Message> pending = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<MessageSign, Set<Integer>> ack = new ConcurrentHashMap<>();
 
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
@@ -28,15 +28,22 @@ public class UniformReliableBroadcast implements DeliverInterface {
         this.deliverInterface = deliverInterface;
     }
 
-    private boolean canDeliver(MessageFirst messageFirst) {
-        return 2*ack.getOrDefault(messageFirst, ConcurrentHashMap.newKeySet()).size() > hosts.size();
+    private boolean canDeliver(MessageSign messageSign) {
+        int numAcknowledged = ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size();
+        boolean result = 2*numAcknowledged > hosts.size();
+        if (result) {
+            System.out.println("Can URB deliver " + messageSign);
+        }
+        else {
+            System.out.println(String.format("Could not deliver %s because only %d out of %d acknowledged it",
+                    messageSign,numAcknowledged,hosts.size()));
+        }
+        return result;
     }
 
     public void broadcast(Message message) {
         System.out.println("URB broadcast " + message);
-        pending.put(new MessageFirst(message.getFirstSenderId(), message.getSeqNum()), message);
-        System.out.println("pending: " + pending);
-        System.out.println("BEB broadcast " + message);
+        pending.put(new MessageSign(message.getFirstSenderId(), message.getSeqNum()), message);
         beb.broadcast(message);
     }
 
@@ -44,7 +51,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
         System.out.println("BEB delivered " + message);
-        MessageFirst bebDeliveredKey = new MessageFirst(message.getFirstSenderId(), message.getSeqNum());
+        MessageSign bebDeliveredKey = new MessageSign(message.getFirstSenderId(), message.getSeqNum());
         Set<Integer> bebDeliveredAck = ack.get(bebDeliveredKey);
         if (bebDeliveredAck == null) {
             Set<Integer> singleSet = ConcurrentHashMap.newKeySet();
@@ -55,26 +62,25 @@ public class UniformReliableBroadcast implements DeliverInterface {
             bebDeliveredAck.add(message.getSenderId());
             ack.put(bebDeliveredKey, bebDeliveredAck);
         }
-        System.out.println("pending: " + pending);
-        System.out.println("ack: " + ack);
 
         if (!pending.containsKey(bebDeliveredKey)) {
             pending.put(bebDeliveredKey, message);
-            System.out.println("pending: " + pending);
             Message msg = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
             System.out.println("BEB broadcast delivered " + msg);
             beb.broadcast(msg);
         }
 
-
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
-        Iterator<MessageFirst> pendingIt = pending.keySet().iterator();
+        Iterator<MessageSign> pendingIt = pending.keySet().iterator();
         while (pendingIt.hasNext()) {
-            MessageFirst pendingKey = pendingIt.next();
+            MessageSign pendingKey = pendingIt.next();
+            System.out.println("Try to URB deliver " + pendingKey);
             if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
                 delivered.add(pendingKey);
-                deliverInterface.deliver(pending.get(pendingKey));
-                pendingIt.remove();
+                Message pendingMessage = pending.get(pendingKey);
+                System.out.println("URB deliver " + pendingMessage);
+                deliverInterface.deliver(pendingMessage);
+                pendingIt.remove(); //garbage clean from pending
             }
         }
 

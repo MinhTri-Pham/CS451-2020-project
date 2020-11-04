@@ -3,11 +3,11 @@ package cs451;
 import java.util.Objects;
 
 // Similar to message but compressed form that doesn't change for rebroadcast messages in URB
-public class MessageFirst {
+public class MessageSign {
     private int firstSenderId;
     private int seqNum;
 
-    public MessageFirst(int firstSenderId, int seqNum) {
+    public MessageSign(int firstSenderId, int seqNum) {
         this.firstSenderId = firstSenderId;
         this.seqNum = seqNum;
     }
@@ -29,9 +29,9 @@ public class MessageFirst {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MessageFirst messageFirst = (MessageFirst) o;
+        MessageSign messageSign = (MessageSign) o;
 
-        return firstSenderId == messageFirst.firstSenderId && seqNum == messageFirst.seqNum;
+        return firstSenderId == messageSign.firstSenderId && seqNum == messageSign.seqNum;
     }
 
     @Override

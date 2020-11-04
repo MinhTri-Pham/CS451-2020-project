@@ -32,9 +32,6 @@ public class PerfectLink implements DeliverInterface {
             delivered.add(message);
             deliverInterface.deliver(message);
         }
-        else {
-            System.out.println("Received duplicate " + message);
-        }
 
 //        int msgSenderId = message.getSenderId();
 //        int msgSeqNum = message.getSeqNum();
