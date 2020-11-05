@@ -17,7 +17,7 @@ public class StubbornLink implements DeliverInterface {
     // The tuple stores the message sequence number and id of host from which for which ACK is expected
     private Map<Tuple<Integer, Integer>, Message> notAcked = new ConcurrentHashMap<>();
     private DeliverInterface deliverInterface;
-    private int timeout = 250; // Timeout in milliseconds (what is a good initial value)
+    private int timeout = 5000; // Timeout in milliseconds (what is a good initial value?)
 
     public StubbornLink(int pid, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
@@ -30,11 +30,14 @@ public class StubbornLink implements DeliverInterface {
         // ACKs can be sent immediately
         // For DATA messages, enforce some flow control
         if (!message.isAck()) {
+            System.out.println(String.format("Trying to send %s to host %d", message, host.getId()));
             // If too many unacknowledged messages, have to wait for acknowledgements (can't send new messages)
             // What is a good value?
-            int maxNotAcked = 20;
+            int maxNotAcked = 2;
             while (notAcked.size() >= maxNotAcked) {
                 // Wait for some time to see if acknowledgements arrive
+                System.out.println("notAcked:" + notAcked);
+                System.out.println("Too many unacknowledged messages, try to wait for ACKs");
                 try {
                     TimeUnit.MILLISECONDS.sleep(timeout);
                 } catch (InterruptedException ie) {
@@ -44,6 +47,7 @@ public class StubbornLink implements DeliverInterface {
                 // Double timeout for next waiting
                 if (notAcked.size() >= maxNotAcked) {
                     for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
+                        System.out.println("Resend " + pendingMsgs.getValue() + " to host " + pendingMsgs.getKey().first);
                         fll.send(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
                     }
                     timeout *= 2;
@@ -52,8 +56,8 @@ public class StubbornLink implements DeliverInterface {
                 else timeout = Math.max(timeout - 100, 250);
             }
             notAcked.put(new Tuple<>(host.getId(), message.getSeqNum()), message);
-            System.out.println("notAcked " + notAcked);
         }
+        System.out.println(String.format("Sent %s to host %d", message, host.getId()));
         fll.send(message, host);
     }
 
@@ -66,7 +70,6 @@ public class StubbornLink implements DeliverInterface {
         if (message.isAck()) {
             System.out.println("Received ACK message " + message);
             notAcked.remove(new Tuple<>(senderId, seqNum));
-            System.out.println("notAcked " + notAcked);
         }
         else {
             System.out.println("Received DATA message " + message);
@@ -80,7 +83,6 @@ public class StubbornLink implements DeliverInterface {
     public void close() {
         fll.close();
     }
-
 
     // Helper class to track acknowledged messages
     public static class Tuple<X, Y> {
