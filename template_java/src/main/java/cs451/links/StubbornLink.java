@@ -71,6 +71,7 @@ public class StubbornLink implements DeliverInterface {
             System.out.println("Received ACK message " + message);
             notAcked.remove(new Tuple<>(senderId, seqNum));
         }
+        // Receive DATA
         else {
             System.out.println("Received DATA message " + message);
             Message ackMessage = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), true);

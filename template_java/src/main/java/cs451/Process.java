@@ -1,7 +1,6 @@
 package cs451;
 
-import cs451.broadcast.FIFOBroadcast;
-import cs451.broadcast.UniformReliableBroadcast;
+import cs451.broadcast.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -14,11 +13,11 @@ import java.util.Map;
 public class Process implements DeliverInterface {
     private int pid;
     private int nbMessagesToBroadcast;
-    private UniformReliableBroadcast fifo;
+    private BestEffortBroadcast fifo;
     private List<String> logs = new ArrayList<>(); // Store logs in memory while broadcasting/delivering
     private String output; // Name of output file
 
-    public Process(int pid, int port, List<Host> hosts,
+    public Process(int pid, String ip, int port, List<Host> hosts,
                    int nbMessagesToBroadcast, String output) {
         this.pid = pid;
         this.nbMessagesToBroadcast = nbMessagesToBroadcast;
@@ -26,7 +25,7 @@ public class Process implements DeliverInterface {
 
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
-        this.fifo = new UniformReliableBroadcast(pid, port, hosts, idToHost, this);
+        this.fifo = new BestEffortBroadcast(pid, ip, port, hosts, idToHost, this);
     }
 
     public void broadcast() {
@@ -53,7 +52,7 @@ public class Process implements DeliverInterface {
         }
     }
 
-    public void close() {
-        fifo.close();
-    }
+//    public void close() {
+//        fifo.close();
+//    }
 }

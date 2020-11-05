@@ -61,7 +61,7 @@ public class FIFOBroadcast implements DeliverInterface{
         }
     }
 
-    public void close() {
-        urb.close();
-    }
+//    public void close() {
+//        urb.close();
+//    }
 }

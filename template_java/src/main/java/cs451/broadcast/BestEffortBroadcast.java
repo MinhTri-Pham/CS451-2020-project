@@ -10,15 +10,16 @@ import java.util.Map;
 
 public class BestEffortBroadcast implements DeliverInterface {
 
-    private PerfectLink pl;
+    private PerfectLinkThreaded pl;
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
 
-    public BestEffortBroadcast(int pid, int sourcePort, List<Host> hosts,
+    public BestEffortBroadcast(int pid, String sourceIp, int sourcePort, List<Host> hosts,
                                Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.hosts = hosts;
         this.deliverInterface = deliverInterface;
-        this.pl = new PerfectLink(pid, sourcePort, idToHost, this);
+//        this.pl = new PerfectLink(pid, sourcePort, idToHost, this);
+        this.pl = new PerfectLinkThreaded(pid, sourceIp, sourcePort, idToHost, this);
     }
 
     public void broadcast(Message message) {
@@ -32,7 +33,7 @@ public class BestEffortBroadcast implements DeliverInterface {
         deliverInterface.deliver(message);
     }
 
-    public void close() {
-        pl.close();
-    }
+//    public void close() {
+//        pl.close();
+//    }
 }

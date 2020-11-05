@@ -24,10 +24,10 @@ public class UniformReliableBroadcast implements DeliverInterface {
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
 
-    public UniformReliableBroadcast(int pid, int sourcePort, List<Host> hosts,
+    public UniformReliableBroadcast(int pid, String sourceIp, int sourcePort, List<Host> hosts,
                                     Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
-        this.beb = new BestEffortBroadcast(pid, sourcePort, hosts, idToHost, this);
+        this.beb = new BestEffortBroadcast(pid, sourceIp,sourcePort, hosts, idToHost, this);
         this.hosts = hosts;
         this.deliverInterface = deliverInterface;
     }
@@ -116,7 +116,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
 //        }
 //    }
 
-    public void close() {
-        beb.close();
-    }
+//    public void close() {
+//        beb.close();
+//    }
 }
