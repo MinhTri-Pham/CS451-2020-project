@@ -2,7 +2,7 @@ package cs451.broadcast;
 
 import cs451.DeliverInterface;
 import cs451.Message;
-import cs451.links.*;
+import cs451.PerfectLink;
 import cs451.Host;
 
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class BestEffortBroadcast implements DeliverInterface {
 
-    private PerfectLinkThreaded pl;
+    private PerfectLink pl;
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
 
@@ -18,8 +18,7 @@ public class BestEffortBroadcast implements DeliverInterface {
                                Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.hosts = hosts;
         this.deliverInterface = deliverInterface;
-//        this.pl = new PerfectLink(pid, sourcePort, idToHost, this);
-        this.pl = new PerfectLinkThreaded(pid, sourceIp, sourcePort, idToHost, this);
+        this.pl = new PerfectLink(pid, sourceIp, sourcePort, idToHost, this);
     }
 
     public void broadcast(Message message) {

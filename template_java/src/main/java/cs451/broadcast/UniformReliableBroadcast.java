@@ -13,13 +13,10 @@ public class UniformReliableBroadcast implements DeliverInterface {
     // Implements Majority ACK algorithm
     private int pid; // Pid of broadcaster
     private BestEffortBroadcast beb;
-    // To compress representation of delivered set. For each first sender,
-    // store sequence number n such that messages with sequence number 1,..., n have been delivered
-    private Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
+//    private Map<Integer, Integer> maxContiguous = new ConcurrentHashMap<>();
     private Set<MessageSign> delivered = ConcurrentHashMap.newKeySet();
     private Map<MessageSign, Message> pending = new ConcurrentHashMap<>();
     private ConcurrentHashMap<MessageSign, Set<Integer>> ack = new ConcurrentHashMap<>();
-//    private List<String> logs = new ArrayList<>();
 
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
@@ -44,7 +41,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
     @ Override
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
-//        logs.add("BEB delivered " + message + "\n");
         MessageSign bebDeliveredKey = new MessageSign(message.getFirstSenderId(), message.getSeqNum());
         Set<Integer> bebDeliveredAck = ack.get(bebDeliveredKey);
         if (bebDeliveredAck == null) {
@@ -67,7 +63,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
         Iterator<MessageSign> pendingIt = pending.keySet().iterator();
         while (pendingIt.hasNext()) {
             MessageSign pendingKey = pendingIt.next();
-//            logs.add("Try to URB deliver " + pendingKey + "\n");
             if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
                 delivered.add(pendingKey);
                 deliverInterface.deliver(pending.get(pendingKey));
@@ -104,17 +99,6 @@ public class UniformReliableBroadcast implements DeliverInterface {
 //            }
 //        }
     }
-
-//    public void writeLog() {
-//        try {
-//            BufferedWriter writer = new BufferedWriter(new FileWriter(String.format("urb_debug_%d.txt", pid)));
-//            for (String log : logs) writer.write(log);
-//            writer.close();
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
 //    public void close() {
 //        beb.close();
