@@ -61,7 +61,6 @@ public class PerfectLinkThreaded implements DeliverInterface{
         }
         else {
             System.out.println("Don't BEB deliver duplicate " + message);
-            System.out.println(delivered);
         }
     }
 
@@ -78,10 +77,10 @@ public class PerfectLinkThreaded implements DeliverInterface{
 
         @Override
         public void run() {
-            int maxNotAcked = 2;
+            int maxNotAcked = 1;
             if (!message.isAck()) {
                 while (notAcked.size() >= maxNotAcked) {
-                    System.out.println("Too many unacknowledged messages, might have to resend");
+                    System.out.println(String.format("Have %d acknowledged messages, wait %d ms for ACKs", timeout, notAcked.size()));
                     try {
                         TimeUnit.MILLISECONDS.sleep(timeout);
                     } catch (InterruptedException ie) {
@@ -91,6 +90,7 @@ public class PerfectLinkThreaded implements DeliverInterface{
                     // If not, resend unacknowledged messages
                     // Double timeout for next waiting
                     if (notAcked.size() >= maxNotAcked) {
+                        System.out.println(String.format("Have %d acknowledged messages, resend", notAcked.size()));
                         for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
                             System.out.println("Resend " + pendingMsgs.getValue() + " to host " + pendingMsgs.getKey().first);
                             sendUdp(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
@@ -131,9 +131,9 @@ public class PerfectLinkThreaded implements DeliverInterface{
                         // Receive DATA
                         else {
                             System.out.println("Received DATA message " + message);
-                            Message ackMessage = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), true);
+                            Message ackMessage = new Message(pid, message.getFirstSenderId(), seqNum, true);
                             System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
-                            sendUdp(ackMessage, idToHost.get(message.getSenderId()));
+                            sendUdp(ackMessage, idToHost.get(senderId));
                             deliver(message);
                         }
                     }
