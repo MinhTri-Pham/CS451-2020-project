@@ -21,7 +21,7 @@ public class PerfectLinkThreaded implements DeliverInterface{
     private Map<Tuple<Integer, Integer>, Message> notAcked = new ConcurrentHashMap<>();
     private DeliverInterface deliverInterface;
     private Map<Integer, Host> idToHost; // Mapping between pids and hosts (for ACKs)
-    private int timeout = 5000; // Timeout in milliseconds (what is a good initial value?)
+    private int timeout = 1000; // Timeout in milliseconds (what is a good initial value?)
     private Set<Message> delivered = ConcurrentHashMap.newKeySet();
 
 
@@ -56,7 +56,12 @@ public class PerfectLinkThreaded implements DeliverInterface{
     public void deliver(Message message) {
         if (!delivered.contains(message)) {
             delivered.add(message);
+            System.out.println("BEB delivered " + message);
             deliverInterface.deliver(message);
+        }
+        else {
+            System.out.println("Don't BEB deliver duplicate " + message);
+            System.out.println(delivered);
         }
     }
 
@@ -73,27 +78,28 @@ public class PerfectLinkThreaded implements DeliverInterface{
 
         @Override
         public void run() {
-            int maxNotAcked = 50;
+            int maxNotAcked = 2;
             if (!message.isAck()) {
-//                while (notAcked.size() >= maxNotAcked) {
-//                    try {
-//                        TimeUnit.MILLISECONDS.sleep(timeout);
-//                    } catch (InterruptedException ie) {
-//                        Thread.currentThread().interrupt();
-//                    }
-//
-//                    // If not, resend unacknowledged messages
-//                    // Double timeout for next waiting
-//                    if (notAcked.size() >= maxNotAcked) {
-//                        for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
-//                            System.out.println("Resend " + pendingMsgs.getValue() + " to host " + pendingMsgs.getKey().first);
-//                            sendUdp(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
-//                        }
-//                        timeout *= 2;
-//                    }
-//                    // By how much to decrease?
-//                    else timeout = Math.max(timeout - 100, 250);
-//                }
+                while (notAcked.size() >= maxNotAcked) {
+                    System.out.println("Too many unacknowledged messages, might have to resend");
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(timeout);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    // If not, resend unacknowledged messages
+                    // Double timeout for next waiting
+                    if (notAcked.size() >= maxNotAcked) {
+                        for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
+                            System.out.println("Resend " + pendingMsgs.getValue() + " to host " + pendingMsgs.getKey().first);
+                            sendUdp(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
+                        }
+                        timeout *= 2;
+                    }
+                    // By how much to decrease?
+                    else timeout = Math.max(timeout - 100, 250);
+                }
                 notAcked.put(new Tuple<>(destHost.getId(), message.getSeqNum()), message);
             }
             sendUdp(message, destHost);
@@ -119,14 +125,14 @@ public class PerfectLinkThreaded implements DeliverInterface{
                         int senderId = message.getSenderId();
                         // Received ACK
                         if (message.isAck()) {
-//                            System.out.println("Received ACK message " + message);
+                            System.out.println("Received ACK message " + message);
                             notAcked.remove(new Tuple<>(senderId, seqNum));
                         }
                         // Receive DATA
                         else {
-//                            System.out.println("Received DATA message " + message);
+                            System.out.println("Received DATA message " + message);
                             Message ackMessage = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), true);
-//                            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
+                            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
                             sendUdp(ackMessage, idToHost.get(message.getSenderId()));
                             deliver(message);
                         }
