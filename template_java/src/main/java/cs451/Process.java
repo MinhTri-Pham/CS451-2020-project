@@ -13,7 +13,7 @@ import java.util.Map;
 public class Process implements DeliverInterface {
     private int pid;
     private int nbMessagesToBroadcast;
-    private BestEffortBroadcast fifo;
+    private FIFOBroadcast fifo;
     private List<String> logs = new ArrayList<>(); // Store logs in memory while broadcasting/delivering
     private String output; // Name of output file
 
@@ -25,7 +25,7 @@ public class Process implements DeliverInterface {
 
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
-        this.fifo = new BestEffortBroadcast(pid, ip, port, hosts, idToHost, this);
+        this.fifo = new FIFOBroadcast(pid, ip, port, hosts, idToHost, this);
     }
 
     public void broadcast() {

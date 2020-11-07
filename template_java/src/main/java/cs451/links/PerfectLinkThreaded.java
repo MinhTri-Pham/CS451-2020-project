@@ -75,25 +75,25 @@ public class PerfectLinkThreaded implements DeliverInterface{
         public void run() {
             int maxNotAcked = 50;
             if (!message.isAck()) {
-                while (notAcked.size() >= maxNotAcked) {
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(timeout);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
-
-                    // If not, resend unacknowledged messages
-                    // Double timeout for next waiting
-                    if (notAcked.size() >= maxNotAcked) {
-                        for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
-                            System.out.println("Resend " + pendingMsgs.getValue() + " to host " + pendingMsgs.getKey().first);
-                            sendUdp(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
-                        }
-                        timeout *= 2;
-                    }
-                    // By how much to decrease?
-                    else timeout = Math.max(timeout - 100, 250);
-                }
+//                while (notAcked.size() >= maxNotAcked) {
+//                    try {
+//                        TimeUnit.MILLISECONDS.sleep(timeout);
+//                    } catch (InterruptedException ie) {
+//                        Thread.currentThread().interrupt();
+//                    }
+//
+//                    // If not, resend unacknowledged messages
+//                    // Double timeout for next waiting
+//                    if (notAcked.size() >= maxNotAcked) {
+//                        for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
+//                            System.out.println("Resend " + pendingMsgs.getValue() + " to host " + pendingMsgs.getKey().first);
+//                            sendUdp(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
+//                        }
+//                        timeout *= 2;
+//                    }
+//                    // By how much to decrease?
+//                    else timeout = Math.max(timeout - 100, 250);
+//                }
                 notAcked.put(new Tuple<>(destHost.getId(), message.getSeqNum()), message);
             }
             sendUdp(message, destHost);
@@ -119,15 +119,15 @@ public class PerfectLinkThreaded implements DeliverInterface{
                         int senderId = message.getSenderId();
                         // Received ACK
                         if (message.isAck()) {
-                            System.out.println("Received ACK message " + message);
+//                            System.out.println("Received ACK message " + message);
                             notAcked.remove(new Tuple<>(senderId, seqNum));
                         }
                         // Receive DATA
                         else {
-                            System.out.println("Received DATA message " + message);
+//                            System.out.println("Received DATA message " + message);
                             Message ackMessage = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), true);
-                            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
-                            sendUdp(message, idToHost.get(message.getSenderId()));
+//                            System.out.println(String.format("Sending ACK message %s to host %d", ackMessage, message.getSenderId()));
+                            sendUdp(ackMessage, idToHost.get(message.getSenderId()));
                             deliver(message);
                         }
                     }

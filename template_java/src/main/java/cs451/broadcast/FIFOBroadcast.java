@@ -19,10 +19,10 @@ public class FIFOBroadcast implements DeliverInterface{
     private AtomicIntegerArray next;
     private DeliverInterface deliverInterface;
 
-    public FIFOBroadcast(int pid, int sourcePort, List<Host> hosts,
+    public FIFOBroadcast(int pid, String sourceIp, int sourcePort, List<Host> hosts,
                          Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
-        this.urb = new UniformReliableBroadcast(pid, sourcePort, hosts, idToHost, this);
+        this.urb = new UniformReliableBroadcast(pid, sourceIp, sourcePort, hosts, idToHost, this);
         this.deliverInterface = deliverInterface;
 
         int[] nextTmp = new int[hosts.size() + 1];
@@ -33,16 +33,17 @@ public class FIFOBroadcast implements DeliverInterface{
     public void broadcast(Message message){
         Message toSend = new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck());
         urb.broadcast(toSend);
-//        System.out.println("FIFO broadcast " + toSend);
+        System.out.println("FIFO broadcast " + toSend);
 
     }
 
     @Override
     public void deliver(Message message) {
-//        System.out.println("URB delivered " + message);
+        System.out.println("URB delivered " + message);
         int firstSender = message.getFirstSenderId();
         int seqNum = message.getSeqNum();
-//        System.out.println("next: " + next);
+        System.out.println("next: " + next);
+        System.out.println("next[s]: " + next.get(firstSender));
         // No point trying to deliver if got message with sequence number < next sequence to be delivered
         // process with id firstSender
         if (seqNum >= next.get(firstSender)) {
@@ -54,7 +55,7 @@ public class FIFOBroadcast implements DeliverInterface{
                     next.incrementAndGet(firstSender);
                     Message pendingMsg = pending.get(pendingKey);
                     deliverInterface.deliver(pendingMsg);
-//                    System.out.println("FIFO deliver: " + pendingMsg);
+                    System.out.println("FIFO deliver: " + pendingMsg);
                     pendingIt.remove();
                 }
             }
