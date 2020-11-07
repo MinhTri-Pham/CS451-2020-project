@@ -43,19 +43,22 @@ public class FIFOBroadcast implements DeliverInterface{
         int firstSender = message.getFirstSenderId();
         int seqNum = message.getSeqNum();
         System.out.println("next: " + next);
-        System.out.println("next[s]: " + next.get(firstSender));
+        System.out.println(String.format("next[%d] = %d", firstSender, next.get(firstSender)));
         // No point trying to deliver if got message with sequence number < next sequence to be delivered
         // process with id firstSender
         if (seqNum >= next.get(firstSender)) {
             pending.put(new MessageSign(firstSender, seqNum), message);
-            Iterator<MessageSign> pendingIt = pending.keySet().iterator();
+            System.out.println(pending);
+            Iterator<Map.Entry<MessageSign, Message>> pendingIt = pending.entrySet().iterator();
             while (pendingIt.hasNext()) {
-                MessageSign pendingKey = pendingIt.next();
-                if (pendingKey.getSeqNum() == next.get(firstSender)) {
-                    next.incrementAndGet(firstSender);
-                    Message pendingMsg = pending.get(pendingKey);
-                    deliverInterface.deliver(pendingMsg);
-                    System.out.println("FIFO deliver: " + pendingMsg);
+                Map.Entry<MessageSign, Message> entry = pendingIt.next();
+                Message msg = entry.getValue();
+                int msgFirstSender = msg.getFirstSenderId();
+                if (msg.getSeqNum() == next.get(msgFirstSender)) {
+                    System.out.println(String.format("Found msg %s with seq num %d = next[%d]", msg, msg.getSeqNum(), next.get(msgFirstSender)));
+                    next.incrementAndGet(msgFirstSender);
+                    deliverInterface.deliver(msg);
+                    System.out.println("FIFO deliver: " + msg);
                     pendingIt.remove();
                 }
             }
