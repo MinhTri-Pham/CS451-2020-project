@@ -25,40 +25,31 @@ public class FIFOBroadcast implements DeliverInterface{
         this.urb = new UniformReliableBroadcast(pid, sourceIp, sourcePort, hosts, idToHost, this);
         this.deliverInterface = deliverInterface;
 
-        int[] nextTmp = new int[hosts.size() + 1];
+        int[] nextTmp = new int[hosts.size()];
         Arrays.fill(nextTmp, 1);
         this.next = new AtomicIntegerArray(nextTmp);
     }
 
     public void broadcast(Message message){
-        Message toSend = new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck());
-        urb.broadcast(toSend);
-        System.out.println("FIFO broadcast " + toSend);
-
+        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck()));
     }
 
     @Override
     public void deliver(Message message) {
-        System.out.println("URB delivered " + message);
         int firstSender = message.getFirstSenderId();
         int seqNum = message.getSeqNum();
-        System.out.println("next: " + next);
-        System.out.println(String.format("next[%d] = %d", firstSender, next.get(firstSender)));
         // No point trying to deliver if got message with sequence number < next sequence to be delivered
         // process with id firstSender
-        if (seqNum >= next.get(firstSender)) {
+        if (seqNum >= next.get(firstSender - 1)) {
             pending.put(new MessageSign(firstSender, seqNum), message);
-            System.out.println(pending);
             Iterator<Map.Entry<MessageSign, Message>> pendingIt = pending.entrySet().iterator();
             while (pendingIt.hasNext()) {
                 Map.Entry<MessageSign, Message> entry = pendingIt.next();
                 Message msg = entry.getValue();
                 int msgFirstSender = msg.getFirstSenderId();
-                if (msg.getSeqNum() == next.get(msgFirstSender)) {
-                    System.out.println(String.format("Found msg %s with seq num %d = next[%d]", msg, msg.getSeqNum(), next.get(msgFirstSender)));
-                    next.incrementAndGet(msgFirstSender);
+                if (msg.getSeqNum() == next.get(msgFirstSender - 1)) {
+                    next.incrementAndGet(msgFirstSender - 1);
                     deliverInterface.deliver(msg);
-                    System.out.println("FIFO deliver: " + msg);
                     pendingIt.remove();
                 }
             }
