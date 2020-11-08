@@ -55,7 +55,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
         if (!pending.containsKey(bebDeliveredSign)) {
             pending.put(bebDeliveredSign, message);
             Message toBroadcast = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
-            logs.add(String.format("Rebroadcast  %s\n", toBroadcast));
+            logs.add(String.format("Rebroadcast %s\n", toBroadcast));
             System.out.println("Rebroadcast " + toBroadcast);
             beb.broadcast(toBroadcast);
         }

@@ -81,7 +81,10 @@ public class PerfectLink implements DeliverInterface{
         @Override
         public void run() {
             if (!message.isAck()) {
+                logs.add(String.format("Send %s to host %d\n", message, destHost.getId()));
+                System.out.println(String.format("Send %s to host %d", message, destHost.getId()));
                 notAcked.put(new Tuple<>(destHost.getId(), message.getSeqNum()), message);
+                logs.add(String.format("notAcked: %s \n", notAcked.keySet()));
             }
             sendUdp(message, destHost);
         }
@@ -105,12 +108,13 @@ public class PerfectLink implements DeliverInterface{
                         // Received ACK
                         if (message.isAck()) {
                             notAcked.remove(new Tuple<>(senderId, seqNum));
+                            logs.add(String.format("Received ACK, notAcked: %s \n", notAcked.keySet()));
                         }
                         // Receive DATA
                         else {
                             sendUdp(new Message(pid, message.getFirstSenderId(), seqNum, true), idToHost.get(senderId));
-                            logs.add(String.format("Received message %s\n", message));
-                            System.out.println("Received message " + message);
+                            logs.add(String.format("Received %s\n", message));
+                            System.out.println("Received " + message);
                             deliver(message);
                         }
                     }
@@ -130,7 +134,11 @@ public class PerfectLink implements DeliverInterface{
                     Thread.currentThread().interrupt();
                 }
                 for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
-                    sendUdp(pendingMsgs.getValue(), idToHost.get(pendingMsgs.getKey().first));
+                    Message toSend = pendingMsgs.getValue();
+                    int hostNum = pendingMsgs.getKey().first;
+                    logs.add(String.format("Retransmit %s to host %d\n", toSend, hostNum));
+                    System.out.println(String.format("Retransmit %s to host %d", toSend, hostNum));
+                    sendUdp(toSend, idToHost.get(hostNum));
                 }
             }
         }
