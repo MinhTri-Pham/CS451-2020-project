@@ -2,9 +2,9 @@ package cs451.broadcast;
 
 import cs451.*;
 
-//import java.io.BufferedWriter;
-//import java.io.FileWriter;
-//import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,6 +17,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
     private Set<MessageSign> delivered = ConcurrentHashMap.newKeySet();
     private Map<MessageSign, Message> pending = new ConcurrentHashMap<>();
     private ConcurrentHashMap<MessageSign, Set<Integer>> ack = new ConcurrentHashMap<>();
+    private List<String> logs = new ArrayList<>();
 
     private List<Host> hosts;
     private DeliverInterface deliverInterface;
@@ -30,6 +31,7 @@ public class UniformReliableBroadcast implements DeliverInterface {
     }
 
     private boolean canDeliver(MessageSign messageSign) {
+        logs.add("ack of message trying to deliver: " + ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()));
         return 2*ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size() > hosts.size();
     }
 
@@ -41,31 +43,28 @@ public class UniformReliableBroadcast implements DeliverInterface {
     @ Override
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
-        MessageSign bebDeliveredKey = new MessageSign(message.getFirstSenderId(), message.getSeqNum());
-        Set<Integer> bebDeliveredAck = ack.get(bebDeliveredKey);
-        if (bebDeliveredAck == null) {
-            Set<Integer> singleSet = ConcurrentHashMap.newKeySet();
-            singleSet.add(message.getSenderId());
-            ack.put(bebDeliveredKey, singleSet);
-        }
-        else {
-            bebDeliveredAck.add(message.getSenderId());
-            ack.put(bebDeliveredKey, bebDeliveredAck);
-        }
+        logs.add("BEB delivered " + message);
+        MessageSign bebDeliveredSign = new MessageSign(message.getFirstSenderId(), message.getSeqNum());
+        ack.computeIfAbsent(bebDeliveredSign, mSign -> ConcurrentHashMap.newKeySet());
+        ack.get(bebDeliveredSign).add(message.getSenderId());
+        logs.add("Ack of BEB delivered " + ack.get(bebDeliveredSign));
 
-        if (!pending.containsKey(bebDeliveredKey)) {
-            pending.put(bebDeliveredKey, message);
-            Message msg = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
-            beb.broadcast(msg);
+        if (!pending.containsKey(bebDeliveredSign)) {
+            pending.put(bebDeliveredSign, message);
+            beb.broadcast(new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck()));
         }
 
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
-        Iterator<MessageSign> pendingIt = pending.keySet().iterator();
+        Iterator<Map.Entry<MessageSign, Message>> pendingIt = pending.entrySet().iterator();
         while (pendingIt.hasNext()) {
-            MessageSign pendingKey = pendingIt.next();
-            if (canDeliver(pendingKey) && !delivered.contains(pendingKey)) {
-                delivered.add(pendingKey);
-                deliverInterface.deliver(pending.get(pendingKey));
+            Map.Entry<MessageSign, Message> entry = pendingIt.next();
+            MessageSign pendingSign = entry.getKey();
+            Message pendingMsg = entry.getValue();
+            logs.add("Try to deliver msg with signature" + pendingSign);
+            if (canDeliver(pendingSign) && !delivered.contains(pendingSign)) {
+                delivered.add(pendingSign);
+                deliverInterface.deliver(pendingMsg);
+                logs.add("URB delivered " + pendingMsg);
                 pendingIt.remove(); //garbage clean from pending
             }
         }
@@ -98,6 +97,17 @@ public class UniformReliableBroadcast implements DeliverInterface {
 //                pendingIt.remove();
 //            }
 //        }
+    }
+
+    public void writeLog() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(String.format("urb_debug_%d.txt", pid)));
+            for (String log : logs) writer.write(log);
+            writer.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 //    public void close() {

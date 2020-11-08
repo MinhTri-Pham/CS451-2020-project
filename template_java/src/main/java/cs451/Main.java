@@ -11,7 +11,7 @@ public class Main {
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
-//        myProcess.close();
+        myProcess.close();
 
         //write/flush output file if necessary
         System.out.println("Writing output.");

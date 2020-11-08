@@ -6,8 +6,7 @@ import java.util.Objects;
 public class Message implements Serializable {
 
     private int senderId;
-    // Need to know the first process that broadcast a message for URB
-    private int firstSenderId;
+    private int firstSenderId; // Need to know the first process that broadcast a message for URB
     private int seqNum;
     private boolean isAck;
 

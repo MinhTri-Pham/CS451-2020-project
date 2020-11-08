@@ -56,7 +56,7 @@ public class Process implements DeliverInterface {
         }
     }
 
-//    public void close() {
-//        fifo.close();
-//    }
+    public void close() {
+        urb.writeLog();
+    }
 }
