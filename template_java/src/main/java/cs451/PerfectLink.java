@@ -1,10 +1,10 @@
 package cs451;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.*;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -17,6 +17,7 @@ public class PerfectLink implements DeliverInterface{
     private DeliverInterface deliverInterface;
     private Map<Integer, Host> idToHost; // Mapping between pids and hosts (for ACKs)
     private Set<Message> delivered = ConcurrentHashMap.newKeySet();
+    private List<String> logs = new ArrayList<>();
 
     public PerfectLink(int pid, String sourceIp, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
         this.pid = pid;
@@ -50,6 +51,19 @@ public class PerfectLink implements DeliverInterface{
         if (!delivered.contains(message)) {
             delivered.add(message);
             deliverInterface.deliver(message);
+            logs.add(String.format("PL delivered message %s\n", message));
+            System.out.println("PL delivered " + message);
+        }
+    }
+
+    public void writeLog() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(String.format("pl_debug_%d.txt", pid)));
+            for (String log : logs) writer.write(log);
+            writer.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -95,6 +109,8 @@ public class PerfectLink implements DeliverInterface{
                         // Receive DATA
                         else {
                             sendUdp(new Message(pid, message.getFirstSenderId(), seqNum, true), idToHost.get(senderId));
+                            logs.add(String.format("Received message %s\n", message));
+                            System.out.println("Received message " + message);
                             deliver(message);
                         }
                     }

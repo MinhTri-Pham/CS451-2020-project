@@ -31,7 +31,8 @@ public class UniformReliableBroadcast implements DeliverInterface {
     }
 
     private boolean canDeliver(MessageSign messageSign) {
-        logs.add("ack of message trying to deliver: " + ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()));
+        logs.add(String.format("ack of message trying to deliver: %s\n", ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet())));
+        System.out.println("ack of message trying to deliver: " + ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()));
         return 2*ack.getOrDefault(messageSign, ConcurrentHashMap.newKeySet()).size() > hosts.size();
     }
 
@@ -43,15 +44,20 @@ public class UniformReliableBroadcast implements DeliverInterface {
     @ Override
     public void deliver(Message message) {
         // Implements upon event <beb, Deliver ...>
-        logs.add("BEB delivered " + message);
+        logs.add(String.format("BEB delivered %s\n", message));
+        System.out.println("BEB delivered " + message);
         MessageSign bebDeliveredSign = new MessageSign(message.getFirstSenderId(), message.getSeqNum());
         ack.computeIfAbsent(bebDeliveredSign, mSign -> ConcurrentHashMap.newKeySet());
         ack.get(bebDeliveredSign).add(message.getSenderId());
-        logs.add("Ack of BEB delivered " + ack.get(bebDeliveredSign));
+        logs.add(String.format("Ack of BEB delivered %s\n", ack.get(bebDeliveredSign)));
+        System.out.println("Ack of BEB delivered " + ack.get(bebDeliveredSign));
 
         if (!pending.containsKey(bebDeliveredSign)) {
             pending.put(bebDeliveredSign, message);
-            beb.broadcast(new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck()));
+            Message toBroadcast = new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck());
+            logs.add(String.format("Rebroadcast  %s\n", toBroadcast));
+            System.out.println("Rebroadcast " + toBroadcast);
+            beb.broadcast(toBroadcast);
         }
 
         // Implements upon exists (s,m) in pending such that candeliver(m) ∧ (m not in delivered)
@@ -60,11 +66,13 @@ public class UniformReliableBroadcast implements DeliverInterface {
             Map.Entry<MessageSign, Message> entry = pendingIt.next();
             MessageSign pendingSign = entry.getKey();
             Message pendingMsg = entry.getValue();
-            logs.add("Try to deliver msg with signature" + pendingSign);
+            logs.add(String.format("Try to deliver msg with signature %s\n", pendingSign));
+            System.out.println("Try to deliver msg with signature" + pendingSign);
             if (canDeliver(pendingSign) && !delivered.contains(pendingSign)) {
                 delivered.add(pendingSign);
                 deliverInterface.deliver(pendingMsg);
-                logs.add("URB delivered " + pendingMsg);
+                logs.add(String.format("URB delivered %s\n", pendingMsg));
+                System.out.println("URB delivered " + pendingMsg);
                 pendingIt.remove(); //garbage clean from pending
             }
         }
@@ -110,7 +118,8 @@ public class UniformReliableBroadcast implements DeliverInterface {
         }
     }
 
-//    public void close() {
-//        beb.close();
-//    }
+    public void close() {
+        writeLog();
+        beb.close();
+    }
 }

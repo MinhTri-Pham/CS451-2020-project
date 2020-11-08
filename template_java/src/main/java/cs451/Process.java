@@ -57,6 +57,6 @@ public class Process implements DeliverInterface {
     }
 
     public void close() {
-        urb.writeLog();
+        urb.close();
     }
 }

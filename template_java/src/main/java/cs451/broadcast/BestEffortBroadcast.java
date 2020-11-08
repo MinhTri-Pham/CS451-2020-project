@@ -32,7 +32,7 @@ public class BestEffortBroadcast implements DeliverInterface {
         deliverInterface.deliver(message);
     }
 
-//    public void close() {
-//        pl.close();
-//    }
+    public void close() {
+        pl.writeLog();
+    }
 }
