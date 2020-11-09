@@ -13,7 +13,8 @@ public class PerfectLink implements DeliverInterface{
     private DatagramSocket socket;
     // Messages sent but not acknowledged
     // The tuple stores the message sequence number and id of host from which for which ACK is expected
-    private Map<Tuple<Integer, Integer>, Message> notAcked = new ConcurrentHashMap<>();
+//    private Map<Tuple<Integer, Integer>, Message> notAcked = new ConcurrentHashMap<>();
+    private Map<Integer, Set<Message>> notAcked = new ConcurrentHashMap<>();
     private DeliverInterface deliverInterface;
     private Map<Integer, Host> idToHost; // Mapping between pids and hosts (for ACKs)
     private Set<Message> delivered = ConcurrentHashMap.newKeySet();
@@ -81,10 +82,12 @@ public class PerfectLink implements DeliverInterface{
         @Override
         public void run() {
             if (!message.isAck()) {
-                logs.add(String.format("Send %s to host %d\n", message, destHost.getId()));
-                System.out.println(String.format("Send %s to host %d", message, destHost.getId()));
-                notAcked.put(new Tuple<>(destHost.getId(), message.getSeqNum()), message);
-                logs.add(String.format("notAcked: %s \n", notAcked.keySet()));
+                int destId = destHost.getId();
+                logs.add(String.format("Send %s to host %d\n", message, destId));
+                System.out.println(String.format("Send %s to host %d", message, destId));
+                notAcked.computeIfAbsent(destId, absentId -> ConcurrentHashMap.newKeySet());
+                notAcked.get(destId).add(message);
+//                notAcked.put(new Tuple<>(destHost.getId(), message.getSeqNum()), message);
             }
             sendUdp(message, destHost);
         }
@@ -107,8 +110,8 @@ public class PerfectLink implements DeliverInterface{
                         int senderId = message.getSenderId();
                         // Received ACK
                         if (message.isAck()) {
-                            notAcked.remove(new Tuple<>(senderId, seqNum));
-                            logs.add(String.format("Received ACK, notAcked: %s \n", notAcked.keySet()));
+//                            notAcked.remove(new Tuple<>(senderId, seqNum));
+                            notAcked.get(senderId).remove(message);
                         }
                         // Receive DATA
                         else {
@@ -133,12 +136,14 @@ public class PerfectLink implements DeliverInterface{
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
-                for (Map.Entry<Tuple<Integer, Integer>, Message> pendingMsgs : notAcked.entrySet()) {
-                    Message toSend = pendingMsgs.getValue();
-                    int hostNum = pendingMsgs.getKey().first;
-                    logs.add(String.format("Retransmit %s to host %d\n", toSend, hostNum));
-                    System.out.println(String.format("Retransmit %s to host %d", toSend, hostNum));
-                    sendUdp(toSend, idToHost.get(hostNum));
+                for (Map.Entry<Integer, Set<Message>> pendingMsgs : notAcked.entrySet()) {
+                    int hostNum = pendingMsgs.getKey();
+                    Set<Message> toSend = pendingMsgs.getValue();
+                    for (Message msg : toSend) {
+                        logs.add(String.format("Retransmit %s to host %d\n", toSend, hostNum));
+                        System.out.println(String.format("Retransmit %s to host %d", toSend, hostNum));
+                        sendUdp(msg, idToHost.get(hostNum));
+                    }
                 }
             }
         }
