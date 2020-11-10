@@ -31,8 +31,4 @@ public class BestEffortBroadcast implements DeliverInterface {
     public void deliver(Message message) {
         deliverInterface.deliver(message);
     }
-
-    public void close() {
-        pl.writeLog();
-    }
 }
