@@ -6,16 +6,17 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+// Channel for reliably sending messages
 public class PerfectLink{
     private int pid;
     private DatagramSocket socket;
-    // Messages sent but not acknowledged (store set of messages per each host to which we sent)
+    // notAcked stores messages sent but not acknowledged (a set of messages per each host to which we sent a message)
     private Map<Integer, Set<Message>> notAcked = new ConcurrentHashMap<>();
-    private DeliverInterface deliverInterface;
-    private Map<Integer, Host> idToHost; // Mapping between pids and hosts (for ACKs)
+    private Observer observer;
+    private Map<Integer, Host> idToHost; // Mapping between process ids and hosts (for ACKs)
     private Set<Message> delivered = ConcurrentHashMap.newKeySet();
 
-    public PerfectLink(int pid, String sourceIp, int sourcePort, Map<Integer, Host> idToHost, DeliverInterface deliverInterface) {
+    public PerfectLink(int pid, String sourceIp, int sourcePort, Map<Integer, Host> idToHost, Observer observer) {
         this.pid = pid;
         this.idToHost = idToHost;
         try {
@@ -23,11 +24,12 @@ public class PerfectLink{
         } catch (SocketException | UnknownHostException e) {
             e.printStackTrace();
         }
-        this.deliverInterface = deliverInterface;
+        this.observer = observer;
         new Receiver().start();
         new Retransmitter().start();
     }
 
+    // Sends a message to a specified host
     private void sendUdp(Message message, Host host) {
         try {
             byte[] buf = message.toData();
@@ -56,6 +58,7 @@ public class PerfectLink{
         @Override
         public void run() {
             if (!message.isAck()) {
+                // Indicate that we're waiting for an ACK for this message
                 int destId = destHost.getId();
                 notAcked.computeIfAbsent(destId, absentId -> ConcurrentHashMap.newKeySet());
                 notAcked.get(destId).add(message);
@@ -83,12 +86,12 @@ public class PerfectLink{
                         if (message.isAck()) {
                             notAcked.get(senderId).remove(message);
                         }
-                        // Receive DATA
+                        // Received DATA - send an ACK and deliver the message if it's unique
                         else {
                             sendUdp(new Message(pid, message.getFirstSenderId(), seqNum, true), idToHost.get(senderId));
                             if (!delivered.contains(message)) {
                                 delivered.add(message);
-                                deliverInterface.deliver(message);
+                                observer.deliver(message);
                             }
                         }
                     }
@@ -103,7 +106,7 @@ public class PerfectLink{
         public void run() {
             while(true) {
                 try {
-                    TimeUnit.MILLISECONDS.sleep(4000);
+                    TimeUnit.MILLISECONDS.sleep(2000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }

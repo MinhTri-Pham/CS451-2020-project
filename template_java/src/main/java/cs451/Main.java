@@ -53,6 +53,7 @@ public class Main {
         if (parser.hasConfig()) {
             String configPath = parser.config();
             System.out.println("Config: " + configPath);
+            // Find number of messages to broadcast
             try {
                 List<String> configLines =  Files.readAllLines(Paths.get(configPath));
                 nbMessagesToBroadcast =  configLines.size() == 1 ? Integer.parseInt(configLines.get(0)) : 0;

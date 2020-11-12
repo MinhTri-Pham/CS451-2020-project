@@ -2,7 +2,7 @@ package cs451;
 
 import java.util.Objects;
 
-// Similar to message but compressed form that doesn't change for rebroadcast messages in URB
+// Compressed form of a message that stays the same for rebroadcast messages in URB
 public class MessageSign {
     private int firstSenderId;
     private int seqNum;
@@ -10,14 +10,6 @@ public class MessageSign {
     public MessageSign(int firstSenderId, int seqNum) {
         this.firstSenderId = firstSenderId;
         this.seqNum = seqNum;
-    }
-
-    public int getFirstSenderId() {
-        return firstSenderId;
-    }
-
-    public int getSeqNum() {
-        return seqNum;
     }
 
     @Override

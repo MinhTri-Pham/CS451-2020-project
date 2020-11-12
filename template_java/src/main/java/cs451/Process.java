@@ -10,11 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Process implements DeliverInterface {
+// Represents a process that broadcasts and delivers messages, logging these events in an output file
+public class Process implements Observer {
     private int pid;
     private int nbMessagesToBroadcast;
     private FIFOBroadcast fifo;
-    private List<String> logs = new ArrayList<>(); // Store logs in memory while broadcasting/delivering
+    private List<String> logs = new ArrayList<>(); //
     private String output; // Name of output file
 
     public Process(int pid, String ip, int port, List<Host> hosts,
@@ -22,12 +23,13 @@ public class Process implements DeliverInterface {
         this.pid = pid;
         this.nbMessagesToBroadcast = nbMessagesToBroadcast;
         this.output = output;
-
+        // Make mapping from process ids to hosts
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
         this.fifo = new FIFOBroadcast(pid, ip, port, hosts, idToHost, this);
     }
 
+    // Broadcast all required messages and log
     public void broadcast() {
         for (int i = 1; i <= nbMessagesToBroadcast; i++) {
             Message broadcastMsg = new Message(pid, pid, i,false);
@@ -36,6 +38,8 @@ public class Process implements DeliverInterface {
         }
     }
 
+    // Invoked whenever the underlying fifo instance delivers a message
+    // Log this event
     @Override
     public void deliver(Message message) {
         logs.add(String.format("d %d %d\n", message.getFirstSenderId(), message.getSeqNum()));

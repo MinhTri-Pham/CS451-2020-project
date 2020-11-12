@@ -5,8 +5,10 @@ import java.util.Objects;
 
 public class Message implements Serializable {
 
+    // Most importantly, distinguish between sender and first sender for URB
+    // Rebroadcast messages change senderId but retain firstSenderId
     private int senderId;
-    private int firstSenderId; // Need to know the first process that broadcast a message for URB
+    private int firstSenderId;
     private int seqNum;
     private boolean isAck;
 
@@ -31,6 +33,7 @@ public class Message implements Serializable {
         return isAck;
     }
 
+    // Transforms a Message into a byte array for sending via UDP
     public byte[] toData() throws IOException {
         ByteArrayOutputStream byteArrOutStream = new ByteArrayOutputStream();
         ObjectOutputStream objOutStr = new ObjectOutputStream(byteArrOutStream);
@@ -38,6 +41,7 @@ public class Message implements Serializable {
         return byteArrOutStream.toByteArray();
     }
 
+    // Transforms a byte array into a Message for processing
     public static Message fromData(byte[] data) {
        try {
            ByteArrayInputStream byteArrInStr = new ByteArrayInputStream(data);

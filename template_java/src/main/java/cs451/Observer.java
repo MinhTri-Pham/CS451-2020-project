@@ -1,5 +1,4 @@
 package cs451;
-
-public interface DeliverInterface {
+public interface Observer {
     void deliver(Message m);
 }
