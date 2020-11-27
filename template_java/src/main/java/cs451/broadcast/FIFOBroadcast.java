@@ -31,7 +31,7 @@ public class FIFOBroadcast implements Observer {
     }
 
     public void broadcast(Message message){
-        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck()));
+        urb.broadcast(new Message(pid, message.getFirstSenderId(), lsn.getAndIncrement(), message.isAck(), message.getVc()));
     }
 
     // Invoked whenever the underlying urb instance delivers a message
@@ -50,7 +50,7 @@ public class FIFOBroadcast implements Observer {
                 Map.Entry<MessageSign, Message> entry = pendingIt.next();
                 Message msg = entry.getValue();
                 int msgFirstSender = msg.getFirstSenderId();
-                // Found such messagei, increment the expected sequence number of its first sender and deliver it
+                // Found such message, increment the expected sequence number of its first sender and deliver it
                 if (msg.getSeqNum() == next.get(msgFirstSender - 1)) {
                     next.incrementAndGet(msgFirstSender - 1);
                     observer.deliver(msg);

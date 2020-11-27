@@ -46,7 +46,7 @@ public class UniformReliableBroadcast implements Observer {
         // If this is a message with a signature we haven't seen yet, rebroadcast the message to all other processes
         if (!pending.containsKey(bebDeliveredSign)) {
             pending.put(bebDeliveredSign, message);
-            beb.broadcast(new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck()));
+            beb.broadcast(new Message(pid, message.getFirstSenderId(), message.getSeqNum(), message.isAck(), message.getVc()));
         }
         // Go through all messages (with a unique signature) received by beb instance and deliver them if possible
         Iterator<Map.Entry<MessageSign, Message>> pendingIt = pending.entrySet().iterator();

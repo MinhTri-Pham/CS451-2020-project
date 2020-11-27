@@ -88,7 +88,7 @@ public class PerfectLink{
                         }
                         // Received DATA - send an ACK and deliver the message if it's unique
                         else {
-                            sendUdp(new Message(pid, message.getFirstSenderId(), seqNum, true), idToHost.get(senderId));
+                            sendUdp(new Message(pid, message.getFirstSenderId(), seqNum, true, message.getVc()), idToHost.get(senderId));
                             if (!delivered.contains(message)) {
                                 delivered.add(message);
                                 observer.deliver(message);

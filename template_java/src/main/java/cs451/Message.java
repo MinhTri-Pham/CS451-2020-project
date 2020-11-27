@@ -1,6 +1,7 @@
 package cs451;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class Message implements Serializable {
@@ -11,12 +12,14 @@ public class Message implements Serializable {
     private int firstSenderId;
     private int seqNum;
     private boolean isAck;
+    private int[] vc;
 
-    public Message(int sendId, int firstSenderId, int seqNum, boolean isAck) {
+    public Message(int sendId, int firstSenderId, int seqNum, boolean isAck, int[] vc) {
         this.senderId = sendId;
         this.firstSenderId = firstSenderId;
         this.seqNum = seqNum;
         this.isAck = isAck;
+        this.vc = vc;
     }
 
     public int getSenderId() {
@@ -31,6 +34,10 @@ public class Message implements Serializable {
 
     public boolean isAck() {
         return isAck;
+    }
+
+    public int[] getVc() {
+        return vc;
     }
 
     // Transforms a Message into a byte array for sending via UDP
@@ -55,7 +62,7 @@ public class Message implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(senderId, firstSenderId, seqNum, isAck);
+        return Objects.hash(senderId, firstSenderId, seqNum, isAck, vc);
     }
 
     @Override
@@ -65,7 +72,7 @@ public class Message implements Serializable {
         Message message = (Message) o;
 
         return senderId == message.senderId && firstSenderId == message.firstSenderId
-                && seqNum == message.seqNum && isAck == message.isAck;
+                && seqNum == message.seqNum && isAck == message.isAck && Arrays.equals(vc, message.vc);
     }
 
     @Override
@@ -77,6 +84,7 @@ public class Message implements Serializable {
                 + ", senderId: " + senderId
                 + ", firstSenderId: " + firstSenderId
                 + ", seqNum: " + seqNum
+                + ", vc: " + Arrays.toString(vc)
                 + ")";
     }
 }

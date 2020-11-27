@@ -3,7 +3,9 @@ package cs451;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Main {
     private static Process myProcess;
@@ -50,24 +52,38 @@ public class Main {
         int nbMessagesToBroadcast = 0;
 
         // if config is defined; always check before parser.config()
+        List<String> configLines = null;
         if (parser.hasConfig()) {
             String configPath = parser.config();
             System.out.println("Config: " + configPath);
             // Find number of messages to broadcast
             try {
-                List<String> configLines =  Files.readAllLines(Paths.get(configPath));
-                nbMessagesToBroadcast =  configLines.size() == 1 ? Integer.parseInt(configLines.get(0)) : 0;
+                configLines = Files.readAllLines(Paths.get(configPath));
+                nbMessagesToBroadcast =  configLines.size() > 1 ? Integer.parseInt(configLines.get(0)) : 0;
 
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+        // Find which processes affect this process
+        int myId = parser.myId();
+        Set<Integer> causality = new HashSet<>();
+        assert configLines != null;
+        for (int i = 1; i < configLines.size(); i++) {
+            String causalityLine = configLines.get(i);
+            String[] causalityProcesses = causalityLine.split(" ");
+            if (Integer.parseInt(causalityProcesses[0]) == myId && causalityProcesses.length > 1) {
+                for (int j = 1; j < causalityProcesses.length; j++) {
+                    causality.add(Integer.parseInt(causalityProcesses[j]));
+                }
             }
         }
 
         // Find my info among hosts and initialise new Process
         for (Host host: parser.hosts()) {
             if (host.getId() == parser.myId()) {
-                myProcess = new Process(parser.myId(), host.getIp(), host.getPort(),
-                        parser.hosts(), nbMessagesToBroadcast, parser.output());
+                myProcess = new Process(myId, host.getIp(), host.getPort(),
+                        parser.hosts(), nbMessagesToBroadcast, causality, parser.output());
                 break;
             }
         }
