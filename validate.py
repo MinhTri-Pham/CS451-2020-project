@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+  #!/usr/bin/env python3
 
 import argparse
 import os, atexit
@@ -202,14 +202,106 @@ class FifoBroadcastValidation(Validation):
         return True
 
 class LCausalBroadcastValidation(Validation):
-    def __init__(self, processes, outputDir, causalRelationships):
-        super().__init__(processes, outputDir)
+    def __init__(self, processes, messages, outputDir, maxCausal):
+        super().__init__(processes, messages, outputDir)
+        self.maxCausal = maxCausal # Maximum number of other processes affecting a process
+        self.causal_relations = {}
+        self.dependencies = {}
 
     def generateConfig(self):
-        raise NotImplementedError()
+        hosts = tempfile.NamedTemporaryFile(mode='w')
+        config = tempfile.NamedTemporaryFile(mode='w')
+        
+        # Generate hosts
+        for i in range(1, self.processes + 1):
+            hosts.write("{} localhost {}\n".format(i, PROCESSES_BASE_IP+i))
+        hosts.flush()
+
+        # Generate config file
+        config.write("{}\n".format(self.messages))
+        # Random causality
+        for i in range(1, self.processes + 1):
+            config.write("{}".format(i))
+            other_pids = [j for j in range(1, self.processes + 1) if j != i]
+            num_causal = random.randint(0, self.maxCausal)
+            causal_list = random.sample(other_pids, num_causal)
+            for p in causal_list:
+                config.write(" {}".format(i))
+            self.causalRelationships[i] = causal_list
+            config.write("\n")
+
+        config.flush()
+
+        return (hosts, config)    
+
+
+    def checkFIFO(self, pid):
+        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
+
+        i = 1
+        nextMessage = defaultdict(lambda : 1)
+        filename = os.path.basename(filePath)
+        self.dependencies[pid] = defaultdict(set)
+        lastDelivery = {}
+        for p in self.causal_relations[pid]:
+            lastDelivery[p] = None
+        
+        # Check FIFO order and in the meantime save causal relationships
+        with open(filePath) as f:
+            for lineNumber, line in enumerate(f):
+                tokens = line.split()
+
+                # Check broadcast
+                if tokens[0] == 'b':
+                    msg = int(tokens[1])
+                    if msg != i:
+                        print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
+                        return False
+                    i += 1
+                    for p in self.causal_relations[pid]:
+                        if lastDelivery[p]!=None:
+                            self.dependencies[pid][msg].add("{} {}".format(p, lastDelivery[p]))
+
+
+                # Check delivery
+                if tokens[0] == 'd':
+                    sender = int(tokens[1])
+                    msg = int(tokens[2])
+                    if msg != nextMessage[sender]:
+                        print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
+                        return False
+                    else:
+                        nextMessage[sender] = msg + 1
+                    if sender in lastDelivery:
+                        lastDelivery[sender] = msg
+        return True
+
+    def checkLCausal(self, pid):
+        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
+        filename = os.path.basename(filePath)
+        delivered = set()
+        with open(filePath) as f:
+            for lineNumber, line in enumerate(f):
+                tokens = line.split()
+                if tokens[0] == 'd':
+                    sender = int(tokens[1])
+                    msg = int(tokens[2])
+                    delivered.add("{} {}".format(sender, msg))
+                    if msg in self.dependencies[sender]:
+                        shouldBeDelivered = self.dependencies[sender][msg]
+                        if not delivered.issuperset(shouldBeDelivered):
+                            print("File {}, Line {}: Causal relationship violated. Expected messages {}, but delivered messages {}".format(filename, lineNumber, shouldBeDelivered, delivered.intersection(shouldBeDelivered)))
+                            return False
+        return True
 
     def checkProcess(self, pid):
-        raise NotImplementedError()
+        if (not checkFIFO(self, pid)):
+            print("FIFO violated for process {}".format(pid))
+            return False
+        if (not checkLCausal(self, pid)):
+            print("LCausal violated for process {}".format(pid))
+            return False  
+        return True           
 
 class StressTest:
     def __init__(self, procs, concurrency, attempts, attemptsRatio):
@@ -338,7 +430,7 @@ def startProcesses(processes, runscript, hostsFilePath, configFilePath, outputDi
 
     return procs
 
-def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
+def main(processes, messages, runscript, broadcastType, logsDir, maxCausal, testConfig):
     # Set tc for loopback
     tc = TC(testConfig['TC'])
     print(tc)
@@ -360,7 +452,7 @@ def main(processes, messages, runscript, broadcastType, logsDir, testConfig):
     if broadcastType == "fifo":
         validation = FifoBroadcastValidation(processes, messages, logsDir)
     else:
-        validation = LCausalBroadcastValidation(processes, messages, logsDir, None)
+        validation = LCausalBroadcastValidation(processes, messages, logsDir, maxCausal)
 
     hostsFile, configFile = validation.generateConfig()
 
@@ -466,6 +558,15 @@ if __name__ == "__main__":
         help="Maximum number (because it can crash) of messages that each process can broadcast",
     )
 
+    parser.add_argument(
+        "-c",
+        "--maxCausal",
+        required=False,
+        type=int,
+        dest="maxCausal",
+        help="Maximum number of causality relationships (must be <= num_processes-1)",
+    )
+
     results = parser.parse_args()
 
     testConfig = {
@@ -488,4 +589,4 @@ if __name__ == "__main__":
         }
     }
 
-    main(results.processes, results.messages, results.runscript, results.broadcastType, results.logsDir, testConfig)
+    main(results.processes, results.messages, results.runscript, results.broadcastType, results.logsDir, results.maxCausal, testConfig)

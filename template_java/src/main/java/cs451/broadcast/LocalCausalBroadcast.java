@@ -69,9 +69,9 @@ public class LocalCausalBroadcast implements Observer {
                 V_recv[msgFirstSender-1]++;
                 if (causality.contains(msgFirstSender)) {
                     V_send[msgFirstSender-1]++;
-                    observer.deliver(msg);
-                    pendingIt.remove();
                 }
+                observer.deliver(msg);
+                pendingIt.remove();
 
             }
         }

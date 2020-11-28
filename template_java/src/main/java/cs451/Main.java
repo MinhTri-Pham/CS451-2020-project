@@ -72,10 +72,11 @@ public class Main {
         for (int i = 1; i < configLines.size(); i++) {
             String causalityLine = configLines.get(i);
             String[] causalityProcesses = causalityLine.split(" ");
-            if (Integer.parseInt(causalityProcesses[0]) == myId && causalityProcesses.length > 1) {
-                for (int j = 1; j < causalityProcesses.length; j++) {
-                    causality.add(Integer.parseInt(causalityProcesses[j]));
+            if (Integer.parseInt(causalityProcesses[0]) == myId) {
+                for (String causalityProcess : causalityProcesses) {
+                    causality.add(Integer.parseInt(causalityProcess));
                 }
+                break;
             }
         }
 
