@@ -227,7 +227,7 @@ class LCausalBroadcastValidation(Validation):
             causal_list = random.sample(other_pids, num_causal)
             for p in causal_list:
                 config.write(" {}".format(i))
-            self.causalRelationships[i] = causal_list
+            self.causal_relations[i] = causal_list
             config.write("\n")
 
         config.flush()
@@ -295,10 +295,10 @@ class LCausalBroadcastValidation(Validation):
         return True
 
     def checkProcess(self, pid):
-        if (not checkFIFO(self, pid)):
+        if (not self.checkFIFO(pid)):
             print("FIFO violated for process {}".format(pid))
             return False
-        if (not checkLCausal(self, pid)):
+        if (not self.checkLCausal(pid)):
             print("LCausal violated for process {}".format(pid))
             return False  
         return True           
