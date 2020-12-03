@@ -205,8 +205,10 @@ class LCausalBroadcastValidation(Validation):
     def __init__(self, processes, messages, outputDir, maxCausal):
         super().__init__(processes, messages, outputDir)
         self.maxCausal = maxCausal # Maximum number of other processes affecting a process
-        self.causal_relations = {}
-        self.dependencies = {}
+        self.causal_relations = {} # Mappings between process pid and set of process pids affecting the process 
+        # 3D array, dependencies[p][m] stores set of messages (represented by sender and sequence number)
+        # that are dependencies for the message m (sequence number) broadcasted by process p (pid)
+        self.dependencies = {} 
 
     def generateConfig(self):
         hosts = tempfile.NamedTemporaryFile(mode='w')
@@ -242,11 +244,12 @@ class LCausalBroadcastValidation(Validation):
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
         self.dependencies[pid] = defaultdict(set)
-        lastDelivery = {}
+        # For each process affecting this process, store last delivered message
+        lastDelivery = {}  
         for p in self.causal_relations[pid]:
             lastDelivery[p] = None
         
-        # Check FIFO order and in the meantime save causal relationships
+        # Check FIFO order and save causal relationships at the same time
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
                 tokens = line.split()
@@ -258,6 +261,7 @@ class LCausalBroadcastValidation(Validation):
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
                         return False
                     i += 1
+                    # If we already delivered a message from a process affecting this process, that message becomes a dependency for the broadcasted message
                     for p in self.causal_relations[pid]:
                         if lastDelivery[p]!=None:
                             self.dependencies[pid][msg].add("{} {}".format(p, lastDelivery[p]))
@@ -271,7 +275,7 @@ class LCausalBroadcastValidation(Validation):
                         print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
                         return False
                     else:
-                        nextMessage[sender] = msg + 1
+                        nextMessage[sender] = msg + 1  
                     if sender in lastDelivery:
                         lastDelivery[sender] = msg
         return True
@@ -283,11 +287,14 @@ class LCausalBroadcastValidation(Validation):
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
                 tokens = line.split()
+                # Check local causal property
                 if tokens[0] == 'd':
                     sender = int(tokens[1])
                     msg = int(tokens[2])
+                    # Keep track of all delivered messages
+                    # Check that we delivered all dependencies
                     delivered.add("{} {}".format(sender, msg))
-                    if msg in self.dependencies[sender]:
+                    if sender in self.dependencies and msg in self.dependencies[sender]:
                         shouldBeDelivered = self.dependencies[sender][msg]
                         if not delivered.issuperset(shouldBeDelivered):
                             print("File {}, Line {}: Causal relationship violated. Expected messages {}, but delivered messages {}".format(filename, lineNumber, shouldBeDelivered, delivered.intersection(shouldBeDelivered)))
@@ -568,6 +575,13 @@ if __name__ == "__main__":
     )
 
     results = parser.parse_args()
+
+    # Default value and error checking for maxCausal parameter
+    if results.maxCausal is None:
+        results.maxCausal = results.processes - 1
+    if results.maxCausal > results.processes - 1:
+        print("Invalid maxCausal, must be <= num_processes-1")
+        exit()    
 
     testConfig = {
         # Network configuration using the tc command
