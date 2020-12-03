@@ -84,11 +84,11 @@ public class LocalCausalBroadcast implements Observer {
                         if (causality.contains(p+1)) {
                             lock_send.lock();
                             V_send[p]++;
-                            lock_recv.unlock();
+                            lock_send.unlock();
                         }
                         observer.deliver(msg);
                         pendingIt.remove();
-                        // Delivered one message, we loop again to deliver more
+                        // Delivered one message, we loop again to try to deliver more
                         deliverAgain = true;
                     }
                 }
