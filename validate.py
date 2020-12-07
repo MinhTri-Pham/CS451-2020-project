@@ -234,6 +234,8 @@ class LCausalBroadcastValidation(Validation):
 
         config.flush()
 
+        print(self.causal_relations)
+
         return (hosts, config)    
 
 

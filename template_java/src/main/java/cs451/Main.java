@@ -3,9 +3,7 @@ package cs451;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
     private static Process myProcess;
@@ -65,22 +63,24 @@ public class Main {
                 e.printStackTrace();
             }
         }
-        // Find which processes affect this process
-        int myId = parser.myId();
-        Set<Integer> causality = new HashSet<>();
+        Map<Integer, Set<Integer>> causality = new HashMap<>();
+        // Causal relations
         assert configLines != null;
-        for (int i = 1; i < configLines.size(); i++) {
-            String causalityLine = configLines.get(i);
-            String[] causalityProcesses = causalityLine.split(" ");
-            if (Integer.parseInt(causalityProcesses[0]) == myId) {
+        if (configLines.size() > 1) {
+            for (int i = 1; i < configLines.size(); i++) {
+                String causalityLine = configLines.get(i);
+                String[] causalityProcesses = causalityLine.split(" ");
+                int process = Integer.parseInt(causalityProcesses[0]);
+                Set<Integer> dependencies = new HashSet<>();
                 for (String causalityProcess : causalityProcesses) {
-                    causality.add(Integer.parseInt(causalityProcess));
+                    dependencies.add(Integer.parseInt(causalityProcess));
                 }
-                break;
+                causality.put(process, dependencies);
             }
         }
 
         // Find my info among hosts and initialise new Process
+        int myId = parser.myId();
         for (Host host: parser.hosts()) {
             if (host.getId() == parser.myId()) {
                 myProcess = new Process(myId, host.getIp(), host.getPort(),

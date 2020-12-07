@@ -11,13 +11,13 @@ import java.util.*;
 public class Process implements Observer {
     private int pid;
     private int nbMessagesToBroadcast;
-    private LocalCausalBroadcast crb;
+    private LocalCausalBroadcast lcb;
     private List<String> logs = new ArrayList<>();
     private String output; // Name of output file
     private int hostNum;
 
     public Process(int pid, String ip, int port, List<Host> hosts,
-                   int nbMessagesToBroadcast, Set<Integer> causality, String output) {
+                   int nbMessagesToBroadcast, Map<Integer, Set<Integer>> causality, String output) {
         this.pid = pid;
         this.nbMessagesToBroadcast = nbMessagesToBroadcast;
         this.output = output;
@@ -25,7 +25,7 @@ public class Process implements Observer {
         // Make mapping from process ids to hosts
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
-        this.crb = new LocalCausalBroadcast(pid, ip, port, hosts, idToHost, causality,this);
+        this.lcb = new LocalCausalBroadcast(pid, ip, port, hosts, idToHost, causality,this);
     }
 
     // Broadcast all required messages and log
@@ -33,7 +33,7 @@ public class Process implements Observer {
         int[] dummyVClock = new int[hostNum];
         for (int i = 1; i <= nbMessagesToBroadcast; i++) {
             Message broadcastMsg = new Message(pid, pid, i,false, dummyVClock);
-            crb.broadcast(broadcastMsg);
+            lcb.broadcast(broadcastMsg);
             logs.add(String.format("b %d\n",i));
         }
     }
