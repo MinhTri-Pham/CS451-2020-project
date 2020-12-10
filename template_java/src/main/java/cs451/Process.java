@@ -14,14 +14,12 @@ public class Process implements Observer {
     private LocalCausalBroadcast lcb;
     private List<String> logs = new ArrayList<>();
     private String output; // Name of output file
-    private int hostNum;
 
     public Process(int pid, String ip, int port, List<Host> hosts,
                    int nbMessagesToBroadcast, Map<Integer, Set<Integer>> causality, String output) {
         this.pid = pid;
         this.nbMessagesToBroadcast = nbMessagesToBroadcast;
         this.output = output;
-        this.hostNum = hosts.size();
         // Make mapping from process ids to hosts
         Map<Integer, Host> idToHost = new HashMap<>();
         for (Host host : hosts) idToHost.put(host.getId(), host);
@@ -30,15 +28,14 @@ public class Process implements Observer {
 
     // Broadcast all required messages and log
     public void broadcast() {
-        int[] dummyVClock = new int[hostNum];
         for (int i = 1; i <= nbMessagesToBroadcast; i++) {
-            Message broadcastMsg = new Message(pid, pid, i,false, dummyVClock);
+            Message broadcastMsg = new Message(pid, pid, i,false, null);
             lcb.broadcast(broadcastMsg);
             logs.add(String.format("b %d\n",i));
         }
     }
 
-    // Invoked whenever the underlying crb instance delivers a message
+    // Invoked whenever the underlying lcb instance delivers a message
     // Log this event
     @Override
     public void deliver(Message message) {

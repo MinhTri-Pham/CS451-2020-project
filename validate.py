@@ -242,8 +242,8 @@ class LCausalBroadcastValidation(Validation):
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
         
-        vectorClock = dict()
-        # Check FIFO order and save causal relationships at the same time
+        lastMessagesFromAffectingProcess = dict()
+        # Check FIFO order and save message dependencies at the same time
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
                 tokens = line.split()
@@ -253,9 +253,11 @@ class LCausalBroadcastValidation(Validation):
                     msg = int(tokens[1])
                     if msg != i:
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
-                        return False
-                    self.dependencies[msg] = vectorClock.copy() 
+                        return False 
                     i += 1
+                    # For each broadcast message, store its message dependencies
+                    # I.e. last messages delivered by processes affecting the process
+                    self.dependencies[msg] = lastMessagesFromAffectingProcess.copy()
                     
 
                 # Check delivery
@@ -266,15 +268,19 @@ class LCausalBroadcastValidation(Validation):
                         print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
                         return False
                     nextMessage[sender] = msg + 1
+                    # Store (sequence numbers) of last messages delivered by processes affecting the process
                     if sender in self.causal_relations[pid]:
-                        vectorClock[sender] = msg
+                        lastMessagesFromAffectingProcess[sender] = msg
         return True
 
+    # Look for all message sent the process delivered by other processes
+    # Check if all of its dependencies the other process delivered all the dependencies
     def checkLCausal(self, pid):
-        for p in range(1, self.processes + 1):
-            if p == pid:
+        for proc in range(1, self.processes + 1):
+            # Skip ourselves because we used our output to determine message dependencies
+            if proc == pid:
                 continue
-            filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(p))
+            filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(proc))
 
             received = defaultdict(lambda: 0)
             filename = os.path.basename(filePath)
@@ -285,9 +291,12 @@ class LCausalBroadcastValidation(Validation):
                     if tokens[0] == "d":
                         sender = int(tokens[1])
                         msg = int(tokens[2])
-
+                        # Message sent the process (pid) delivered by another process (proc)
                         if sender == pid:
+                            # Check dependecies of sent message, which are (sender, sequence number) pairs
+                            # Note that process p must affect this process 
                             for (p, num) in self.dependencies[msg].items():
+                                # If sequence number of last message delivered by p bigger than latest message dependency of p, we violated causal property  
                                 if num > received[p]:
                                     print(
                                         "File {}, Line {}: Causal ordering of process {} violated. Expected message {} from {} but last message got was {}".format(
@@ -300,6 +309,7 @@ class LCausalBroadcastValidation(Validation):
                                         )
                                     )
                                     return False
+                        # Store (sequence number) of last messages for any sender
                         received[sender] = msg
         return True
 

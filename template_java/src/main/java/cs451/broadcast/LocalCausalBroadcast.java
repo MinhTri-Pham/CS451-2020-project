@@ -20,7 +20,7 @@ public class LocalCausalBroadcast implements Observer {
     private int[] vectorClock;
     private Map<Integer, Set<Integer>> causality; // Set of (pids of) processes that affect this process
     private Observer observer;
-    private final ReentrantLock lock = new ReentrantLock(); // For concurrent accesses of vectorClock
+    private final ReentrantLock lock = new ReentrantLock(); // For concurrent accesses of pending and vectorClock
 
     public LocalCausalBroadcast(int pid, String sourceIp, int sourcePort, List<Host> hosts,
                                 Map<Integer, Host> idToHost, Map<Integer, Set<Integer>> causality, Observer observer) {
@@ -32,7 +32,8 @@ public class LocalCausalBroadcast implements Observer {
     }
 
     // Determine if a vector clock W <= a vector clock V
-    // Here's where locality comes in, we dependencies aren't induced by all processes but by the ones that affect the process
+    // Since dependencies aren't induced by all processes but by the ones that affect the process
+    // We only check positions corresponding to processes affecting this process
     public boolean compareVectorClocks(int[] W, int[] V, Set<Integer> dependencies) {
         for (int p : dependencies) {
             if (W[p-1] > V[p-1]) return false;
@@ -56,21 +57,21 @@ public class LocalCausalBroadcast implements Observer {
     public void deliver(Message message) {
         lock.lock();
         pending.add(message);
-        boolean deliverAgain = true;
-        while (deliverAgain) {
-            deliverAgain = false;
+        boolean tryDeliver = true;
+        while (tryDeliver) {
+            tryDeliver = false;
             // Iterate over all pending messages, check if it's possible to deliver any of them
             Iterator<Message> pendingIt = pending.iterator();
             while (pendingIt.hasNext()) {
                 Message msg = pendingIt.next();
                 int firstSender = msg.getFirstSenderId();
-                // Check if we delivered all dependencies
+                // Check if we delivered all dependencies using the vector clock
                 if (compareVectorClocks(msg.getVc(), vectorClock, causality.get(firstSender))) {
                     vectorClock[firstSender - 1]++;
                     observer.deliver(msg);
                     pendingIt.remove();
-                    // Delivered one message, we loop again to try to deliver more
-                    deliverAgain = true;
+                    // Delivered a message, so loop again to try to deliver more
+                    tryDeliver = true;
                 }
             }
         }
