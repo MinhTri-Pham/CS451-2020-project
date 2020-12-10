@@ -206,9 +206,7 @@ class LCausalBroadcastValidation(Validation):
         super().__init__(processes, messages, outputDir)
         self.maxCausal = maxCausal # Maximum number of other processes affecting a process
         self.causal_relations = {} # Mappings between process pid and set of process pids affecting the process 
-        # 3D array, dependencies[p][m] stores set of messages (represented by sender and sequence number)
-        # that are dependencies for the message m (sequence number) broadcasted by process p (pid)
-        self.dependencies = {} 
+        self.dependencies = dict()
 
     def generateConfig(self):
         hosts = tempfile.NamedTemporaryFile(mode='w')
@@ -234,8 +232,6 @@ class LCausalBroadcastValidation(Validation):
 
         config.flush()
 
-        print(self.causal_relations)
-
         return (hosts, config)    
 
 
@@ -245,12 +241,8 @@ class LCausalBroadcastValidation(Validation):
         i = 1
         nextMessage = defaultdict(lambda : 1)
         filename = os.path.basename(filePath)
-        self.dependencies[pid] = defaultdict(set)
-        # For each process affecting this process, store last delivered message
-        lastDelivery = {}  
-        for p in self.causal_relations[pid]:
-            lastDelivery[p] = None
         
+        vectorClock = dict()
         # Check FIFO order and save causal relationships at the same time
         with open(filePath) as f:
             for lineNumber, line in enumerate(f):
@@ -262,12 +254,9 @@ class LCausalBroadcastValidation(Validation):
                     if msg != i:
                         print("File {}, Line {}: Messages broadcast out of order. Expected message {} but broadcast message {}".format(filename, lineNumber, i, msg))
                         return False
+                    self.dependencies[msg] = vectorClock.copy() 
                     i += 1
-                    # If we already delivered a message from a process affecting this process, that message becomes a dependency for the broadcasted message
-                    for p in self.causal_relations[pid]:
-                        if lastDelivery[p]!=None:
-                            self.dependencies[pid][msg].add("{} {}".format(p, lastDelivery[p]))
-
+                    
 
                 # Check delivery
                 if tokens[0] == 'd':
@@ -276,31 +265,42 @@ class LCausalBroadcastValidation(Validation):
                     if msg != nextMessage[sender]:
                         print("File {}, Line {}: Message delivered out of order. Expected message {}, but delivered message {}".format(filename, lineNumber, nextMessage[sender], msg))
                         return False
-                    else:
-                        nextMessage[sender] = msg + 1  
-                    if sender in lastDelivery:
-                        lastDelivery[sender] = msg
+                    nextMessage[sender] = msg + 1
+                    if sender in self.causal_relations[pid]:
+                        vectorClock[sender] = msg
         return True
 
     def checkLCausal(self, pid):
-        filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(pid))
-        filename = os.path.basename(filePath)
-        delivered = set()
-        with open(filePath) as f:
-            for lineNumber, line in enumerate(f):
-                tokens = line.split()
-                # Check local causal property
-                if tokens[0] == 'd':
-                    sender = int(tokens[1])
-                    msg = int(tokens[2])
-                    # Keep track of all delivered messages
-                    # Check that we delivered all dependencies
-                    delivered.add("{} {}".format(sender, msg))
-                    if sender in self.dependencies and msg in self.dependencies[sender]:
-                        shouldBeDelivered = self.dependencies[sender][msg]
-                        if not delivered.issuperset(shouldBeDelivered):
-                            print("File {}, Line {}: Causal relationship violated. Expected messages {}, but delivered messages {}".format(filename, lineNumber, shouldBeDelivered, delivered.intersection(shouldBeDelivered)))
-                            return False
+        for p in range(1, self.processes + 1):
+            if p == pid:
+                continue
+            filePath = os.path.join(self.outputDirPath, 'proc{:02d}.output'.format(p))
+
+            received = defaultdict(lambda: 0)
+            filename = os.path.basename(filePath)
+
+            with open(filePath) as f:
+                for lineNumber, line in enumerate(f):
+                    tokens = line.split()
+                    if tokens[0] == "d":
+                        sender = int(tokens[1])
+                        msg = int(tokens[2])
+
+                        if sender == pid:
+                            for (p, num) in self.dependencies[msg].items():
+                                if num > received[p]:
+                                    print(
+                                        "File {}, Line {}: Causal ordering of process {} violated. Expected message {} from {} but last message got was {}".format(
+                                            filename,
+                                            lineNumber,
+                                            pid,
+                                            num,
+                                            p,
+                                            received[p],
+                                        )
+                                    )
+                                    return False
+                        received[sender] = msg
         return True
 
     def checkProcess(self, pid):
