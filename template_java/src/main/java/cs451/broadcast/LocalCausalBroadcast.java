@@ -5,6 +5,7 @@ import cs451.Message;
 import cs451.Observer;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class LocalCausalBroadcast implements Observer {
@@ -13,14 +14,14 @@ public class LocalCausalBroadcast implements Observer {
     private int pid;
     private UniformReliableBroadcast urb;
     private int lsn = 0; // How many messages the process crb-broadcast
-    private Set<Message> pending = new HashSet<>();
+    private Set<Message> pending = ConcurrentHashMap.newKeySet();
     // vectorClock keeps track of dependencies
     // vectorClock[p-1] represents the number of messages that the process crb-delivered from process p
     // Assumes numbering of processes from 1
     private int[] vectorClock;
     private Map<Integer, Set<Integer>> causality; // Set of (pids of) processes that affect this process
     private Observer observer;
-    private final ReentrantLock lock = new ReentrantLock(); // For concurrent accesses of pending and vectorClock
+    private final ReentrantLock lock = new ReentrantLock(); // For concurrent accesses of vectorClock
 
     public LocalCausalBroadcast(int pid, String sourceIp, int sourcePort, List<Host> hosts,
                                 Map<Integer, Host> idToHost, Map<Integer, Set<Integer>> causality, Observer observer) {
@@ -29,16 +30,6 @@ public class LocalCausalBroadcast implements Observer {
         this.vectorClock = new int[hosts.size()];
         this.causality = causality;
         this.observer = observer;
-    }
-
-    // Determine if a vector clock W <= a vector clock V
-    // Since dependencies aren't induced by all processes but by the ones that affect the process
-    // We only check positions corresponding to processes affecting this process
-    public boolean compareVectorClocks(int[] W, int[] V, Set<Integer> dependencies) {
-        for (int p : dependencies) {
-            if (W[p-1] > V[p-1]) return false;
-        }
-        return true;
     }
 
     public void broadcast(Message message) {
@@ -55,7 +46,6 @@ public class LocalCausalBroadcast implements Observer {
     // Deliver the message if possible under lcb semantics
     @Override
     public void deliver(Message message) {
-        lock.lock();
         pending.add(message);
         boolean tryDeliver = true;
         while (tryDeliver) {
@@ -65,9 +55,25 @@ public class LocalCausalBroadcast implements Observer {
             while (pendingIt.hasNext()) {
                 Message msg = pendingIt.next();
                 int firstSender = msg.getFirstSenderId();
-                // Check if we delivered all dependencies using the vector clock
-                if (compareVectorClocks(msg.getVc(), vectorClock, causality.get(firstSender))) {
+                // Check if we delivered all message dependencies
+                boolean canDeliver = true;
+                Set<Integer> dependencies = causality.get(firstSender);
+                int[] msgVectorClock = msg.getVc();
+                lock.lock();
+                // Check if message vector clock <= our vector clock
+                // Since dependencies aren't induced by all processes but by the ones that affect the process
+                // We only check positions corresponding to processes affecting this process
+                for (int p : dependencies) {
+                    if (msgVectorClock[p-1] > vectorClock[p-1]) {
+                        canDeliver = false;
+                        break;
+                    }
+                }
+                lock.unlock();
+                if (canDeliver) {
+                    lock.lock();
                     vectorClock[firstSender - 1]++;
+                    lock.unlock();
                     observer.deliver(msg);
                     pendingIt.remove();
                     // Delivered a message, so loop again to try to deliver more
@@ -75,6 +81,5 @@ public class LocalCausalBroadcast implements Observer {
                 }
             }
         }
-        lock.unlock();
     }
 }
