@@ -55,15 +55,13 @@ public class LocalCausalBroadcast implements Observer {
             while (pendingIt.hasNext()) {
                 Message msg = pendingIt.next();
                 int firstSender = msg.getFirstSenderId();
-                // Check if we delivered all message dependencies
                 boolean canDeliver = true;
-                Set<Integer> dependencies = causality.get(firstSender);
                 int[] msgVectorClock = msg.getVc();
                 lock.lock();
-                // Check if message vector clock <= our vector clock
+                // Check if message vector clock <= our vector clock (meaning we delivered all dependencies)
                 // Since dependencies aren't induced by all processes but by the ones that affect the process
                 // We only check positions corresponding to processes affecting this process
-                for (int p : dependencies) {
+                for (int p : causality.get(firstSender)) {
                     if (msgVectorClock[p-1] > vectorClock[p-1]) {
                         canDeliver = false;
                         break;
